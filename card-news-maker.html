@@ -259,6 +259,11 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .lang button.on{background:#ffc53d;color:#1c1f5e}
 .enh{background:#12141c;border:1px solid #2a2d3d;border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:14px}
 .enh p{margin:0}
+.pc{display:inline-flex;gap:4px;flex:none}
+.mini{font:inherit;font-size:12px;font-weight:700;border:1px solid #3a3e55;background:#20233a;color:#c5c8da;border-radius:8px;padding:6px 9px;cursor:pointer;white-space:nowrap}
+.mini:hover{filter:brightness(1.15)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:60;max-width:min(92vw,520px);background:#20233a;color:#e8e9f0;border:1px solid #3a3e55;border-radius:12px;padding:10px 16px;font-size:14px;box-shadow:0 10px 30px rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.on{opacity:1}
 .lnk{font:inherit;font-size:13px;background:none;border:0;color:#ffc53d;text-decoration:underline;cursor:pointer;padding:0 2px}
 .fixd{margin-top:14px;border:1px solid #2a2d3d;border-radius:10px;padding:10px 14px}
 .fixd summary{cursor:pointer;font-weight:800;font-size:14px;color:#9ae6b4}
@@ -748,8 +753,8 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="d">카드 종류와 이번 호에서 다룰 종목(또는 주제)을 넣어요. 지난 호 소재는 발행 기록에서 자동으로 채워져요.</p>
     <div class="row" style="margin:0">
       <label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label>
-      <label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"></label>
-      <label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 바로 직전 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."></label>
+      <label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"><span class="pc"><button class="mini" data-paste="sport">붙여넣기</button><button class="mini" data-clear="sport">지우기</button></span></label>
+      <label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 바로 직전 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."><span class="pc"><button class="mini" data-paste="past">붙여넣기</button><button class="mini" data-clear="past">지우기</button></span></label>
     </div>
   </div>
 
@@ -762,7 +767,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     </div>
     <p class="hint" id="pHint" style="margin:0 0 8px;display:none"></p>
     <textarea id="prompt"></textarea>
-    <div class="row"><button class="btn pri" id="copyG">복사하고 제미나이 열기</button><button class="btn" id="copyP">복사만</button><button class="btn" id="pReset">원래 프롬프트로</button><span id="copied" class="hint"></span></div>
+    <div class="row"><button class="btn pri" id="copyG">복사하고 제미나이 열기</button><button class="btn" id="copyP">복사만</button><button class="btn" id="pReset">원래 프롬프트로</button><span class="pc"><button class="mini" data-paste="prompt">붙여넣기</button><button class="mini" data-clear="prompt">지우기</button></span><span id="copied" class="hint"></span></div>
   </div>
 
   <div class="step" data-st="3">
@@ -827,7 +832,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
       <div class="row" style="margin-top:0"><button class="btn pri" id="dzCopyG">디자인 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="dzCopy">복사만</button><span id="dzCopied" class="hint"></span></div>
       <textarea id="dzPrompt" readonly style="display:none;height:160px;margin-top:10px"></textarea>
       <textarea id="dzJson" style="height:150px;margin-top:10px" placeholder='{ "design": { ... } }'></textarea>
-      <div class="row"><button class="btn pri" id="dzGo">디자인 적용</button><button class="btn" id="dzEx">예시 디자인 불러오기</button><button class="btn" id="dzOff">디자인 해제</button></div>
+      <div class="row"><button class="btn pri" data-paste="dzJson" data-then="dzGo">붙여넣기(바로 적용)</button><button class="btn" data-clear="dzJson">지우기</button><button class="btn" id="dzGo">디자인 적용</button><button class="btn" id="dzEx">예시 디자인 불러오기</button><button class="btn" id="dzOff">디자인 해제</button></div>
       <p class="hint" id="dzMsg"></p>
     </details>
   </div>
@@ -844,7 +849,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="d">캡션과 해시태그를 자동으로 써 뒀어요. 고친 뒤 "인스타로 보내기"를 누르면 캡션이 복사되고, 휴대폰에서는 공유 창이 열려요. 공유 창에서 Instagram을 고르고 8장을 피드에 올린 뒤 캡션 칸에 붙여 넣으세요. 컴퓨터에서는 8장을 내려받고 인스타그램 웹을 열어 줘요.</p>
     <textarea id="igCap" style="height:220px;font-family:inherit;font-size:14px"></textarea>
     <p class="hint" id="igCnt" style="margin:4px 0 0;text-align:right"></p>
-    <div class="row"><button class="btn pri" id="igGo">인스타로 보내기</button><button class="btn" id="igCopy">캡션만 복사</button><button class="btn" id="igRe">캡션 다시 쓰기</button></div>
+    <div class="row"><button class="btn pri" id="igGo">인스타로 보내기</button><button class="btn" id="igCopy">캡션만 복사</button><button class="btn" id="igRe">캡션 다시 쓰기</button><span class="pc"><button class="mini" data-paste="igCap">붙여넣기</button><button class="mini" data-clear="igCap">지우기</button></span></div>
     <p class="hint" id="igMsg"></p>
     <details class="igd"><summary>버튼 하나로 자동 업로드까지 하려면?</summary>
       <p class="hint">인스타그램 공식 API(Meta 그래프 API)로 앱 안에서 바로 게시할 수 있어요. 다만 이런 준비가 필요해요. ① 인스타 계정을 비즈니스 또는 크리에이터 계정으로 바꾸고 페이스북 페이지와 연결 ② Meta 개발자 앱을 만들고 게시 권한 승인 받기 ③ 8장 이미지를 인터넷 주소로 올려 둘 작은 서버(API는 파일을 직접 받지 않고 주소만 받아요). 접속 키를 이 파일 안에 두면 남이 쓸 수 있어 위험해서, 서버 쪽에 둬야 해요.</p>
@@ -854,6 +859,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
   <div class="wzf"><button class="btn" id="wzPrev">이전</button><span id="wzPos" class="hint"></span><button class="btn pri" id="wzNext">다음</button></div>
 </div>
 <div id="stage"></div>
+<div id="toast"></div>
 <div id="zoom"><div class="box" id="zbox"></div><div class="bar2"><button id="zprev">이전</button><span id="zcap"></span><button id="znext">다음</button><button id="zclose">닫기</button></div></div>
 
 <script>
@@ -2307,6 +2313,22 @@ function stSave(){
  if(s&&s.step&&s.step!==CUR_ST)goStep(s.step);
  stSave();
 })();
+/* ===== 붙여넣기 / 지우기 버튼 ===== */
+var TOAST_T=0;
+function toast(t){var e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(TOAST_T);TOAST_T=setTimeout(function(){e.classList.remove('on')},2600)}
+function fieldSet(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}
+document.addEventListener('click',function(e){
+ var b=e.target.closest('[data-paste],[data-clear]');if(!b)return;
+ e.preventDefault();
+ if(b.dataset.clear){var c=$(b.dataset.clear);fieldSet(c,'');c.focus();toast('지웠어요.');return}
+ var el=$(b.dataset.paste);
+ if(!(navigator.clipboard&&navigator.clipboard.readText)){el.focus();toast('자동 붙여넣기를 쓸 수 없어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣어 주세요.');return}
+ navigator.clipboard.readText().then(function(t){
+  if(!t){toast('복사해 둔 글이 없어요.');return}
+  fieldSet(el,el.tagName==='INPUT'?t.replace(/\s+/g,' ').trim():t);toast('붙여 넣었어요.');
+  if(b.dataset.then)$(b.dataset.then).click();
+ },function(){el.focus();toast('브라우저가 붙여넣기를 막았어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣어 주세요.')});
+});
 </script>
 </body>
 </html>
