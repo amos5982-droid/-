@@ -69,10 +69,17 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .drop b{color:#e8e9f0}
 .drop.ov{border-color:#ffc53d;color:#e8e9f0}
 /* ----- 한 단계씩 진행 ----- */
-.wz{display:flex;gap:6px;margin:0 0 16px;overflow-x:auto;padding-bottom:2px}
-.wz button{flex:none;font:inherit;font-size:13px;font-weight:700;border:1px solid #2a2d3d;background:#171923;color:#9aa0b8;border-radius:99px;padding:7px 14px;cursor:pointer}
-.wz button.on{background:#ffc53d;border-color:#ffc53d;color:#1c1f5e}
-.wz button.opt{margin-left:auto}
+.top{position:relative;display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 6px}
+.top h1{margin:0!important}
+.wzbtn{flex:none;font:inherit;font-size:14px;font-weight:800;border:1px solid #3a3e55;background:#20233a;color:#e8e9f0;border-radius:99px;padding:8px 16px;cursor:pointer}
+.wzbtn .car{display:inline-block;transition:transform .2s}
+.wzbtn[aria-expanded="true"] .car{transform:rotate(180deg)}
+.wz{position:absolute;right:0;top:calc(100% + 8px);z-index:40;display:flex;flex-direction:column;gap:2px;min-width:210px;background:#171923;border:1px solid #2a2d3d;border-radius:14px;padding:8px;box-shadow:0 18px 40px rgba(0,0,0,.45);transform-origin:top right;transform:scaleY(.6);opacity:0;visibility:hidden;transition:transform .18s ease,opacity .18s ease,visibility 0s .18s}
+.wz.open{transform:none;opacity:1;visibility:visible;transition:transform .18s ease,opacity .18s ease}
+.wz button{font:inherit;font-size:15px;font-weight:700;text-align:left;border:0;background:none;color:#c5c8da;border-radius:10px;padding:10px 14px;cursor:pointer}
+.wz button:hover{background:#20233a}
+.wz button.on{background:#ffc53d;color:#1c1f5e}
+#pvBar{margin:4px 0 14px}
 .wz-on .step{display:none}
 .wz-on .step.cur{display:block}
 .wzf{display:none}
@@ -242,7 +249,6 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .sl.e2 .cd{padding-top:28px;padding-bottom:28px}.sl.e2 .rw{padding:26px 0}.sl.e2 .r{padding:50px 0}.sl.e2 .cl{gap:54px}.sl.e2 .srcs li{padding:28px 0}.sl.e2 .bars{gap:26px}.sl.e2 .stk{gap:22px}
 /* ----- 수정 프롬프트 ----- */
 /* ----- 맨 위 미리보기 줄 ----- */
-#pvBar{margin:4px 0 14px}
 #pvBar #pvCap{margin:0 0 8px}
 #pvBar #grid{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding:0 0 8px;margin:0;grid-template-columns:none}
 #pvBar .pvw{flex:0 0 168px;width:168px;min-width:0;scroll-snap-align:start}
@@ -726,14 +732,16 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 </head>
 <body>
 <div class="app">
-  <h1>스포츠 카드뉴스 제작기</h1>
+  <div class="top">
+    <h1>스포츠 카드뉴스 제작기</h1>
+    <button class="wzbtn" id="wzBtn" aria-haspopup="true" aria-expanded="false"><span id="wzCur">1 주제</span> <span class="car">▾</span></button>
+    <nav class="wz" id="wz"><button data-go="1">1 주제</button><button data-go="2">2 제미나이</button><button data-go="3">3 원고</button><button data-go="4">4 발행호</button><button data-go="5">5 디자인</button><button data-go="6">6 저장</button><button data-go="7">7 인스타</button></nav>
+  </div>
   <div id="pvBar" style="display:none">
     <p class="hint" id="pvCap"></p>
     <div id="grid"></div>
   </div>
   <p class="sub" id="intro">주제를 넣고 제미나이에 보내 원고를 받아 오면, 8장 카드뉴스를 만들어 저장하고 인스타까지 올릴 수 있어요.</p>
-
-  <nav class="wz" id="wz"><button data-go="1">1 주제</button><button data-go="2">2 제미나이</button><button data-go="3">3 원고</button><button data-go="4">4 발행호</button><button data-go="5">5 디자인</button><button data-go="6">6 저장</button><button data-go="7">7 인스타</button></nav>
 
   <div class="step" data-st="1">
     <h2><i>1</i>주제 정하기</h2>
@@ -2136,7 +2144,10 @@ function goStep(st){
  CUR_ST=String(st);
  document.querySelectorAll('.app .step').forEach(function(s){s.classList.toggle('cur',s.dataset.st===CUR_ST)});
  document.querySelectorAll('#wz button').forEach(function(b){b.classList.toggle('on',b.dataset.go===CUR_ST)});
- var wb=document.querySelector('#wz button.on'),wz=$('wz');if(wb)wz.scrollLeft=Math.max(0,wb.offsetLeft-wz.offsetLeft-(wz.clientWidth-wb.offsetWidth)/2);
+ var wb=document.querySelector('#wz button.on');if(wb)$('wzCur').textContent=wb.textContent;
+ wzOpen(false);
+ var sh=document.querySelector('.app .step.cur h2');if(sh)sh.parentNode.insertBefore($('pvBar'),sh.nextSibling);
+ if($('pvBar').style.display!=='none')fit();
  var k=ST_SEQ.indexOf(CUR_ST);
  $('wzPrev').disabled=k<=0;$('wzNext').textContent=ST_NEXT[CUR_ST];
  $('wzPos').textContent=(k+1)+' / '+ST_SEQ.length;
@@ -2146,6 +2157,7 @@ function goStep(st){
  if(CUR_ST==='7')igEnter();
 }
 // 원고에 고칠 게 없으면 바로 다음 단계로, 있으면 3단계에 남아 "고칠 것"을 펼쳐 보여 준다
+function wzOpen(on){$('wz').classList.toggle('open',on);$('wzBtn').setAttribute('aria-expanded',on?'true':'false')}
 async function makeAndGo(){
  await make();
  if(DATA&&!FIXM.length)return goStep(LANG==='en'?'6':'4');
@@ -2154,6 +2166,9 @@ async function makeAndGo(){
 (function(){
  document.querySelector('.app').classList.add('wz-on');
  $('wz').onclick=function(e){var b=e.target.closest('button');if(b)goStep(b.dataset.go)};
+ $('wzBtn').onclick=function(e){e.stopPropagation();wzOpen(!$('wz').classList.contains('open'))};
+ document.addEventListener('click',function(e){if(!e.target.closest('#wz'))wzOpen(false)});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape')wzOpen(false)});
  $('wzPrev').onclick=function(){var k=ST_SEQ.indexOf(CUR_ST);if(k>0)goStep(ST_SEQ[k-1])};
  $('wzNext').onclick=function(){
   if(CUR_ST==='3')return DATA&&$('json').value===MADE_FOR?goStep(LANG==='en'?'6':'4'):makeAndGo();
