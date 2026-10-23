@@ -70,10 +70,11 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .drop.ov{border-color:#ffc53d;color:#e8e9f0}
 .histb{background:#12141c;border:1px solid #2a2d3d;border-radius:10px;padding:14px;margin:0 0 12px}
 .histb h3{font-size:15px;margin:0 0 4px;font-weight:800}
-.hrow{display:grid;grid-template-columns:60px 104px 170px minmax(0,1fr) 40px;gap:6px;margin-bottom:6px}
-.hrow:has(.hx){grid-template-columns:60px 104px minmax(0,1fr) 40px}
-.hrow input{min-width:0;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:7px 9px;font:inherit;font-size:13px}
-.hrow .hdel{padding:0;font-size:18px}
+.hli{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 2px;border-top:1px solid #2a2d3d;font-size:14px}
+.hli:first-child{border-top:0}
+.hli small{color:#9aa0b8;margin-left:6px}
+.hli .hdel{flex:none;background:none;border:0;color:#9aa0b8;font-size:18px;cursor:pointer;padding:0 6px}
+.hli .hdel:hover{color:#ffb4c0}
 #shareBtn{display:none}
 .dzb{border-top:1px solid #2a2d3d;margin-top:18px;padding-top:16px}
 .dzb h3{font-size:16px;margin:0 0 4px;font-weight:800}
@@ -100,9 +101,6 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
  .drop{padding:16px 12px}
  #grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
  #zoom .bar2{flex-wrap:wrap;justify-content:center;padding:0 8px}
- .hrow,.hrow:has(.hx){grid-template-columns:56px minmax(0,1fr) 40px}
- .hrow .hs,.hrow .hm,.hrow .hx{grid-column:1/3}
- .hrow .hdel{grid-column:3;grid-row:1}
 }
 #thImg{height:96px;max-width:200px;object-fit:contain;border-radius:8px;background:#0e0f14}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
@@ -737,12 +735,12 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
       <button data-k="make" class="on">① 국문 원고 만들기</button>
       <button data-k="en">② 영문으로 바꾸기</button>
     </div>
-    <div class="row" style="margin:0 0 10px"><label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label><label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"></label><label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 최근 8개 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."></label><button class="btn" id="histT">발행 기록 ▾ <span id="histN"></span></button></div>
+    <div class="row" style="margin:0 0 10px"><label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label><label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"></label><label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 바로 직전 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."></label><button class="btn" id="histT">발행 기록 ▾ <span id="histN"></span></button></div>
     <div id="histBox" class="histb" style="display:none">
       <h3 id="histCap">발행 기록</h3>
-      <p class="hint" style="margin:0 0 10px">JPG를 저장하면 그 호가 여기에 자동으로 기록되고, 최근 8개 호가 프롬프트의 [지난 호 소재]에 들어가요. 다음 호 번호도 여기서 정해져요. 종목 카드뉴스와 비즈니스 트렌드는 따로 기록돼요. 칸을 고치면 바로 저장돼요.</p>
+      <p class="hint" style="margin:0 0 10px">JPG를 저장하면 그 호가 자동으로 기록돼요. 바로 직전 호가 프롬프트의 [지난 호 소재]에 들어가고, 다음 호 번호도 여기서 정해져요. 종목 카드뉴스와 비즈니스 트렌드는 따로 기록돼요.</p>
       <div id="histList"></div>
-      <div class="row"><button class="btn" id="histAdd">+ 직접 추가</button><button class="btn" id="histExp">기록 내보내기</button><button class="btn" id="histImp">기록 가져오기</button><input type="file" id="histFile" accept=".json,application/json" hidden></div>
+      <div class="row"><button class="btn" id="histExp">기록 내보내기</button><button class="btn" id="histImp">기록 가져오기</button><input type="file" id="histFile" accept=".json,application/json" hidden></div>
       <p class="hint" id="histMsg"></p>
     </div>
     <p class="hint" id="pHint" style="margin:0 0 8px;display:none"></p>
@@ -1495,7 +1493,7 @@ async function save(){
   },'image/jpeg',0.93)});
  }
  lsSet(DT==='biz'?'lastIssueB':'lastIssue',String(NO));
- var rec=histRecord(DATA,DT,NO,$('date').value||today());if(DT===CT)$('past').value=histPast(CT);
+ var rec=histRecord(DATA,DT,NO,$('date').value||today());if(DT===CT)histRefresh();
  if(share){SHARE=files;$('shareBtn').style.display='inline-block';$('saving').textContent='8장을 만들었어요. "사진에 저장/공유"를 눌러 사진 앱에 저장하거나 보내세요.'+(rec?' 발행 기록에 '+NO+'호를 남겼어요.':'');$('save').disabled=false;return}
  $('saving').textContent=(rec?NO+'호를 발행 기록에 남겼어요. ':'')+'저장 완료. 다운로드 폴더에서 '+pre+'-'+no+'-'+L+'-01.jpg ~ 08.jpg를 확인하세요. 여러 파일 저장을 묻는 창이 뜨면 허용해 주세요.';
  $('save').disabled=false;
@@ -1876,7 +1874,7 @@ function dzApply(z,quiet){
 })();
 
 /* ===== 발행 기록: 카드 종류별로 지난 호를 모아 두고, 프롬프트의 [지난 호 소재]와 다음 호 번호를 알아서 채운다 ===== */
-var HIST_N=8;
+var HIST_N=1; // 프롬프트에는 바로 직전 호만 넣는다
 var HIST_SEED={sp:[{no:3,date:'',subject:'농구',summary:'NBA 유럽 리그와 구단 가치'},{no:4,date:'',subject:'배드민턴',summary:'안세영 시즌과 대회 일정'}],
  biz:[{no:1,date:'',subject:'KBO 흥행과 월드컵 스폰서 성적표',summary:'팬덤 커머스, 스폰서십 22배, 스트리밍/협업'}]};
 var HIST_OLD={sp:'농구 #3 NBA 유럽 리그와 구단 가치, 배드민턴 #4 안세영 시즌과 대회 일정',biz:'#1 KBO 흥행과 월드컵 스폰서 성적표(팬덤 커머스, 스폰서십 22배, 스트리밍/협업)'};
@@ -1917,18 +1915,12 @@ function histRecord(d,t,no,date){
 function histRender(){
  var t=CT,a=histGet(t),box=$('histList');
  $('histN').textContent='('+a.length+'건)';
- $('histCap').textContent=(t==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스')+' 발행 기록';
+ $('histCap').textContent=(t==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스')+' 지난 호';
  box.innerHTML=a.length?'':'<p class="hint">아직 기록이 없어요.</p>';
  a.slice().reverse().forEach(function(e,ri){
-  var i=a.length-1-ri,r=document.createElement('div');r.className='hrow';
-  if(e.text)r.innerHTML='<input class="hn" value="'+esc(e.no==null?'':e.no)+'" placeholder="호"><input class="hd2" value="'+esc(e.date||'')+'" placeholder="발행일"><input class="hx" value="'+esc(e.text)+'" title="예전에 직접 쓴 지난 호 소재"><button class="btn hdel" title="삭제">×</button>';
-  else r.innerHTML='<input class="hn" value="'+esc(e.no==null?'':e.no)+'" placeholder="호"><input class="hd2" value="'+esc(e.date||'')+'" placeholder="발행일"><input class="hs" value="'+esc(e.subject||'')+'" placeholder="'+(t==='biz'?'주제':'종목')+'"><input class="hm" value="'+esc(e.summary||'')+'" placeholder="소재"><button class="btn hdel" title="삭제">×</button>';
-  r.querySelectorAll('input').forEach(function(inp){inp.onchange=function(){
-   var b=histGet(t),x=b[i];if(!x)return;
-   var n=parseInt(r.querySelector('.hn').value,10);x.no=isNaN(n)?null:n;x.date=r.querySelector('.hd2').value.trim();
-   if(x.text!=null)x.text=r.querySelector('.hx').value.trim();else{x.subject=r.querySelector('.hs').value.trim();x.summary=r.querySelector('.hm').value.trim()}
-   histPut(t,b);histRefresh();
-  }});
+  var i=a.length-1-ri,r=document.createElement('div');r.className='hli';
+  var nm=e.text?e.text:(e.no!=null?e.no+'호 ':'')+(e.subject||'');
+  r.innerHTML='<span>'+esc(nm)+(e.date?' <small>'+esc(e.date)+'</small>':'')+'</span><button class="hdel" title="이 기록 지우기">×</button>';
   r.querySelector('.hdel').onclick=function(){var b=histGet(t);b.splice(i,1);histPut(t,b);histRefresh()};
   box.appendChild(r);
  });
@@ -1937,7 +1929,6 @@ function histRender(){
 function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('issue').value=histNext(CT);if(window.showP)window.showP(window.curP||'make')}
 (function(){
  $('histT').onclick=function(){var b=$('histBox');b.style.display=b.style.display==='none'?'block':'none'};
- $('histAdd').onclick=function(){var t=CT,a=histGet(t);a.push({no:histNext(t),date:today(),subject:'',summary:''});histPut(t,a);histRefresh();var f=$('histList').querySelector('.hs');if(f)f.focus()};
  $('histExp').onclick=function(){
   var o={app:'sports-cardnews',version:1,saved:today(),sp:histGet('sp'),biz:histGet('biz'),lastIssue:lsGet('lastIssue'),lastIssueB:lsGet('lastIssueB')};
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));a.download='cardnews-history-'+today().replace(/\./g,'')+'.json';
