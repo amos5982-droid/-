@@ -110,7 +110,6 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
  #prompt,#json,#fixTxt{height:190px}
  #thImg{height:72px}
  .drop{padding:16px 12px}
- #grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
  #zoom .bar2{flex-wrap:wrap;justify-content:center;padding:0 8px}
 }
 #thImg{height:96px;max-width:200px;object-fit:contain;border-radius:8px;background:#0e0f14}
@@ -242,8 +241,24 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .sl.e1 .cd{padding-top:20px;padding-bottom:20px}.sl.e1 .rw{padding:18px 0}.sl.e1 .r{padding:40px 0}.sl.e1 .cl{gap:42px}.sl.e1 .srcs li{padding:20px 0}.sl.e1 .bars{gap:18px}.sl.e1 .stk{gap:16px}
 .sl.e2 .cd{padding-top:28px;padding-bottom:28px}.sl.e2 .rw{padding:26px 0}.sl.e2 .r{padding:50px 0}.sl.e2 .cl{gap:54px}.sl.e2 .srcs li{padding:28px 0}.sl.e2 .bars{gap:26px}.sl.e2 .stk{gap:22px}
 /* ----- 수정 프롬프트 ----- */
-#fixT.bad{background:#5a1f2b;border-color:#ff7a90;color:#ffd0d8}
-#fixT.good{background:#16301f;border-color:#2f7a4a;color:#9ae6b4}
+/* ----- 맨 위 미리보기 줄 ----- */
+#pvBar{margin:4px 0 14px}
+#pvBar #pvCap{margin:0 0 8px}
+#pvBar #grid{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding:0 0 8px;margin:0;grid-template-columns:none}
+#pvBar .pvw{flex:0 0 168px;width:168px;min-width:0;scroll-snap-align:start}
+@media (max-width:720px){#pvBar .pvw{flex-basis:132px;width:132px}}
+/* ----- 원고 단계 ----- */
+.lang{display:inline-flex;border:1px solid #3a3e55;border-radius:99px;padding:3px;margin:0 0 12px;background:#0e0f14}
+.lang button{font:inherit;font-size:14px;font-weight:800;border:0;background:none;color:#9aa0b8;border-radius:99px;padding:7px 22px;cursor:pointer}
+.lang button.on{background:#ffc53d;color:#1c1f5e}
+.enh{background:#12141c;border:1px solid #2a2d3d;border-radius:10px;padding:12px 14px;margin:0 0 12px;font-size:14px}
+.enh p{margin:0}
+.lnk{font:inherit;font-size:13px;background:none;border:0;color:#ffc53d;text-decoration:underline;cursor:pointer;padding:0 2px}
+.fixd{margin-top:14px;border:1px solid #2a2d3d;border-radius:10px;padding:10px 14px}
+.fixd summary{cursor:pointer;font-weight:800;font-size:14px;color:#9ae6b4}
+.fixd.bad{border-color:#ff7a90}
+.fixd.bad summary{color:#ffb4c0}
+.dzb summary{cursor:pointer;font-weight:800;font-size:15px}
 #fixTxt{height:240px}
 /* ----- 비즈니스 카드 ----- */
 .bz.bz{width:1080px;height:1350px;box-sizing:border-box;padding:64px 80px 52px;display:flex;flex-direction:column;gap:22px;font-family:'Paperlogy','Noto Sans KR',system-ui,sans-serif;word-break:keep-all;text-wrap:pretty;position:relative;overflow:hidden}
@@ -712,13 +727,80 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 <body>
 <div class="app">
   <h1>스포츠 카드뉴스 제작기</h1>
-  <p class="sub">제미나이가 쓴 원고를 붙여 넣으면 8장 카드뉴스가 만들어지고, 버튼 한 번으로 JPG 8장이 저장돼요. 인터넷 연결이나 AI 계정이 없어도 이 파일 하나로 동작해요.</p>
+  <div id="pvBar" style="display:none">
+    <p class="hint" id="pvCap"></p>
+    <div id="grid"></div>
+  </div>
+  <p class="sub" id="intro">주제를 넣고 제미나이에 보내 원고를 받아 오면, 8장 카드뉴스를 만들어 저장하고 인스타까지 올릴 수 있어요.</p>
 
-  <nav class="wz" id="wz"><button data-go="1">1 프롬프트</button><button data-go="2">2 원고</button><button data-go="3">3 미리보기와 저장</button><button data-go="4">4 인스타</button><button data-go="d" class="opt">디자인(선택)</button></nav>
+  <nav class="wz" id="wz"><button data-go="1">1 주제</button><button data-go="2">2 제미나이</button><button data-go="3">3 원고</button><button data-go="4">4 발행호</button><button data-go="5">5 디자인</button><button data-go="6">6 저장</button><button data-go="7">7 인스타</button></nav>
 
-  <div class="step" data-st="d">
-    <h2><i>★</i>디자인 참고 이미지 넣기(선택)</h2>
-    <p class="d">마음에 드는 카드뉴스, 포스터, 구단 엠블럼 같은 이미지를 넣으면 그 색 조합을 뽑아 카드에 자동으로 입혀요. 주색(배경, 제목, 로고)과 강조색(포인트, 하이라이트)이 바뀌어요. 이미지 없이 아래 칸에서 색을 직접 골라도 돼요. 레이아웃과 꾸밈까지 따라 하려면 아래 제미나이 단계를 이어서 하세요. 이미지는 이 컴퓨터 밖으로 나가지 않아요.</p>
+  <div class="step" data-st="1">
+    <h2><i>1</i>주제 정하기</h2>
+    <p class="d">카드 종류와 이번 호에서 다룰 종목(또는 주제)을 넣어요. 지난 호 소재는 발행 기록에서 자동으로 채워져요.</p>
+    <div class="row" style="margin:0">
+      <label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label>
+      <label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"></label>
+      <label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 바로 직전 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."></label>
+    </div>
+  </div>
+
+  <div class="step" data-st="2">
+    <h2><i>2</i>제미나이에 보내기</h2>
+    <p class="d">아래 프롬프트를 복사해 제미나이에 붙여 넣어요. 칸 안의 글은 직접 고쳐도 돼요.</p>
+    <div class="tabs" id="ptabs" style="display:none">
+      <button data-k="make" class="on">국문 원고 만들기</button>
+      <button data-k="en">영문으로 바꾸기</button>
+    </div>
+    <p class="hint" id="pHint" style="margin:0 0 8px;display:none"></p>
+    <textarea id="prompt"></textarea>
+    <div class="row"><button class="btn pri" id="copyG">복사하고 제미나이 열기</button><button class="btn" id="copyP">복사만</button><button class="btn" id="pReset">원래 프롬프트로</button><span id="copied" class="hint"></span></div>
+  </div>
+
+  <div class="step" data-st="3">
+    <h2><i>3</i>원고 붙여 넣기</h2>
+    <div class="lang" id="langT"><button data-l="ko" class="on">국문</button><button data-l="en">영문</button></div>
+    <div id="enHelp" class="enh" style="display:none">
+      <p>영문판은 국문 원고를 영어로 옮겨 만들어요. 버튼을 누르면 국문 원고가 들어간 프롬프트가 복사되고 제미나이가 열려요. 받은 영문 JSON을 아래 칸에 붙여 넣으세요.</p>
+      <div class="row" style="margin-top:8px"><button class="btn pri" id="enCopyG">영문판 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="enCopy">복사만</button></div>
+      <p class="hint" id="enMsg" style="margin:6px 0 0"></p>
+    </div>
+    <p class="d" id="jHint">제미나이 답변의 { 로 시작해서 } 로 끝나는 부분을 복사해 와요. 앞뒤 설명이 섞여도 괜찮아요. "붙여넣기"를 누르면 붙여 넣고 바로 카드를 만들어요.</p>
+    <textarea id="json" placeholder='{ "lang": "ko", ... }'></textarea>
+    <div class="row">
+      <button class="btn pri" id="jPaste">붙여넣기</button>
+      <button class="btn" id="jClear">지우기</button>
+      <button class="btn" id="make">카드 만들기</button>
+      <span class="hint">예시: <button class="lnk" id="exKo">국문</button> <button class="lnk" id="exEn">영문</button></span>
+    </div>
+    <p class="hint" id="jMsg"></p>
+    <div id="msgs"></div>
+    <details id="fixD" class="fixd">
+      <summary>고칠 것 <span id="fixCount"></span></summary>
+      <div id="fixBox"><p class="hint" id="fixHint" style="margin:8px 0"></p><textarea id="fixTxt" readonly></textarea><div class="row"><button class="btn pri" id="fixCopyG">수정 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="fixCopy">복사만</button><span id="fixOk" class="hint"></span></div></div>
+    </details>
+  </div>
+
+  <div class="step" data-st="4">
+    <h2><i>4</i>발행호 확인</h2>
+    <p class="d" id="issueInfo">호 번호와 발행일은 자동으로 채워져요. 바꾸면 미리보기에 바로 반영돼요.</p>
+    <div class="row" style="margin-top:0">
+      <label>호 번호 <input type="number" id="issue" min="1" value="1"></label>
+      <label>발행일 <input type="text" id="date" value=""></label>
+      <button class="btn" id="histT">발행 기록 ▾ <span id="histN"></span></button>
+    </div>
+    <div id="histBox" class="histb" style="display:none;margin-top:12px">
+      <h3 id="histCap">발행 기록</h3>
+      <p class="hint" style="margin:0 0 10px">JPG를 저장하면 그 호가 자동으로 기록돼요. 바로 직전 호가 프롬프트의 [지난 호 소재]에 들어가고, 다음 호 번호도 여기서 정해져요. 종목 카드뉴스와 비즈니스 트렌드는 따로 기록돼요. 기록은 이 기기에만 저장되니 다른 기기에서 이어 만들 때는 내보내고 가져오세요.</p>
+      <div id="histList"></div>
+      <div class="row"><button class="btn" id="histClr">첫 호부터 다시 시작(기록 지우기)</button><button class="btn" id="histExp">기록 내보내기</button><button class="btn" id="histImp">기록 가져오기</button><input type="file" id="histFile" accept=".json,application/json" hidden></div>
+      <p class="hint" id="histMsg"></p>
+    </div>
+  </div>
+
+  <div class="step" data-st="5">
+    <h2><i>5</i>디자인 설정(선택)</h2>
+    <p class="d">그대로 두면 기본 디자인이에요. 마음에 드는 카드뉴스, 포스터, 구단 엠블럼 같은 이미지를 넣으면 그 색 조합을 뽑아 카드에 입혀요. 색은 아래 칸에서 직접 골라도 돼요. 한 번 정한 디자인은 다음 호에도 그대로 쓰여요. 이미지는 이 기기 밖으로 나가지 않아요.</p>
     <div class="drop" id="thDrop">이미지를 여기로 끌어다 놓거나 <b>클릭해서 고르세요</b>. 복사한 이미지는 Ctrl+V로 붙여 넣어도 돼요.<input type="file" id="thFile" accept="image/*" hidden></div>
     <div class="row" id="thRow">
       <img id="thImg" alt="참고 이미지" style="display:none">
@@ -731,60 +813,26 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
       <label title="켜 두면 제미나이 디자인 JSON에 들어 있는 색은 쓰지 않고, 여기서 고른 색을 유지해요."><input type="checkbox" id="thLock"> 내 색 고정(디자인 적용 때 색은 안 바꿈)</label>
     </div>
     <p class="hint" id="thHint"></p>
-    <div class="dzb">
-      <h3>레이아웃과 꾸밈까지 따라 하기(제미나이)</h3>
-      <p class="d">① "디자인 프롬프트 복사"를 눌러 제미나이에 붙여 넣고 같은 이미지를 첨부해요. ② 제미나이가 준 디자인 JSON을 아래 칸에 붙여 넣고 "디자인 적용"을 눌러요. 배경 순서, 모서리, 카드와 꼬리표 모양, 제목 스타일, 배경 무늬, 꾸밈 도형이 이미지처럼 바뀌어요. 원고(2번)와 따로 저장돼서 한 번 만든 디자인을 다음 호에도 그대로 쓸 수 있어요.</p>
-      <div class="row" style="margin-top:0"><button class="btn pri" id="dzCopy">디자인 프롬프트 복사</button><button class="btn" id="dzCopyG">복사하고 제미나이 열기</button><span id="dzCopied" class="hint"></span></div>
+    <details class="dzb">
+      <summary>레이아웃과 꾸밈까지 이미지처럼 바꾸기(제미나이)</summary>
+      <p class="d" style="margin-top:8px">버튼을 눌러 제미나이를 열고 같은 이미지를 첨부해 보내요. 받은 디자인 JSON을 아래 칸에 붙여 넣고 "디자인 적용"을 누르면 배경 순서, 모서리, 카드와 꼬리표 모양, 제목 스타일, 배경 무늬, 꾸밈 도형이 바뀌어요.</p>
+      <div class="row" style="margin-top:0"><button class="btn pri" id="dzCopyG">디자인 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="dzCopy">복사만</button><span id="dzCopied" class="hint"></span></div>
       <textarea id="dzPrompt" readonly style="display:none;height:160px;margin-top:10px"></textarea>
       <textarea id="dzJson" style="height:150px;margin-top:10px" placeholder='{ "design": { ... } }'></textarea>
       <div class="row"><button class="btn pri" id="dzGo">디자인 적용</button><button class="btn" id="dzEx">예시 디자인 불러오기</button><button class="btn" id="dzOff">디자인 해제</button></div>
       <p class="hint" id="dzMsg"></p>
-    </div>
-  </div>
-  <div class="step" data-st="1">
-    <h2><i>1</i>제미나이에 붙여 넣을 프롬프트 복사</h2>
-    <p class="d">아래에서 고르고 복사한 뒤 제미나이에 붙여 넣어요. 종목 이름만 바꾸면 돼요.</p>
-    <div class="tabs" id="ptabs">
-      <button data-k="make" class="on">① 국문 원고 만들기</button>
-      <button data-k="en">② 영문으로 바꾸기</button>
-    </div>
-    <div class="row" style="margin:0 0 10px"><label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label><label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"></label><label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 바로 직전 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."></label><button class="btn" id="histT">발행 기록 ▾ <span id="histN"></span></button></div>
-    <div id="histBox" class="histb" style="display:none">
-      <h3 id="histCap">발행 기록</h3>
-      <p class="hint" style="margin:0 0 10px">JPG를 저장하면 그 호가 자동으로 기록돼요. 바로 직전 호가 프롬프트의 [지난 호 소재]에 들어가고, 다음 호 번호도 여기서 정해져요. 종목 카드뉴스와 비즈니스 트렌드는 따로 기록돼요.</p>
-      <div id="histList"></div>
-      <div class="row"><button class="btn" id="histClr">첫 호부터 다시 시작(기록 지우기)</button><button class="btn" id="histExp">기록 내보내기</button><button class="btn" id="histImp">기록 가져오기</button><input type="file" id="histFile" accept=".json,application/json" hidden></div>
-      <p class="hint" id="histMsg"></p>
-    </div>
-    <p class="hint" id="pHint" style="margin:0 0 8px;display:none"></p>
-    <textarea id="prompt" readonly></textarea>
-    <div class="row"><button class="btn pri" id="copyP">프롬프트 복사</button><button class="btn" id="copyG">복사하고 제미나이 열기</button><span id="copied" class="hint"></span></div>
+    </details>
   </div>
 
-  <div class="step" data-st="2">
-    <h2><i>2</i>제미나이가 준 원고 붙여 넣기</h2>
-    <p class="d">제미나이 답변의 { 로 시작해서 } 로 끝나는 부분(코드 블록)을 통째로 복사해 붙여 넣어요. 앞뒤에 붙은 설명이 섞여도 괜찮아요.</p>
-    <textarea id="json" placeholder='{ "lang": "ko", ... }'></textarea>
-    <div class="row">
-      <label>호 번호 <input type="number" id="issue" min="1" value="1"></label>
-      <label>발행일 <input type="text" id="date" value=""></label>
-      <button class="btn pri" id="make">카드 만들기</button>
-      <button class="btn" id="exKo">예시 불러오기(국문)</button>
-      <button class="btn" id="exEn">예시 불러오기(영문)</button>
-    </div>
-    <p class="hint">호 번호는 발행 기록의 마지막 호 + 1을 자동으로 채워요. 기록은 이 브라우저에 저장되니, 다른 컴퓨터나 휴대폰에서 이어 만들 때는 1번의 "발행 기록"에서 기록을 내보내고 가져오세요. 발행일은 오늘 날짜예요.</p>
-    <div id="msgs"></div>
+  <div class="step" data-st="6">
+    <h2><i>6</i>미리보기 확인하고 저장</h2>
+    <p class="d">맨 위 미리보기를 옆으로 넘겨 확인해요. 누르면(컴퓨터는 더블클릭) 크게 볼 수 있어요. 빨간 글씨가 있는 장은 3단계 "고칠 것"에서 고칠 수 있어요.</p>
+    <div class="row" style="margin-top:0"><button class="btn pri" id="save" disabled>JPG 8장 저장</button><button class="btn pri" id="shareBtn">사진에 저장/공유</button><button class="btn" id="goEn" style="display:none">영문판도 만들기</button><button class="btn" id="goKo" style="display:none">국문판 보기</button></div>
+    <p class="hint" id="saving"></p>
   </div>
 
-  <div class="step" data-st="3">
-    <h2><i>3</i>미리보기와 JPG 저장</h2>
-    <p class="d">빨간 글씨가 있는 장은 글이 넘치거나 겹쳤다는 뜻이에요. 아래 "수정 프롬프트 복사하기"를 누르면 고칠 내용이 자동으로 정리돼요. 제미나이에 붙여 넣고, 받은 JSON을 2번에 다시 넣으세요. 미리보기를 더블클릭(휴대폰은 탭)하면 크게 볼 수 있어요.</p>
-    <div class="row" style="margin-top:0"><button class="btn pri" id="save" disabled>JPG 8장 저장</button><button class="btn pri" id="shareBtn">사진에 저장/공유</button><button class="btn" id="enCopy" style="display:none">영문판 프롬프트 복사</button><button class="btn" id="enCopyG" style="display:none">영문판 복사하고 제미나이 열기</button><span id="saving" class="hint"></span><button class="btn" id="fixT">수정 프롬프트 복사하기 ▾ <span id="fixCount"></span></button></div>
-    <div id="fixBox" style="display:none;margin-top:12px"><p class="hint" id="fixHint" style="margin:0 0 8px"></p><textarea id="fixTxt" readonly></textarea><div class="row"><button class="btn pri" id="fixCopy">수정 프롬프트 복사</button><button class="btn" id="fixCopyG">복사하고 제미나이 열기</button><span id="fixOk" class="hint"></span></div></div>
-    <div id="grid"></div>
-  </div>
-  <div class="step" data-st="4">
-    <h2><i>4</i>인스타그램에 올리기</h2>
+  <div class="step" data-st="7">
+    <h2><i>7</i>인스타그램에 올리기</h2>
     <p class="d">캡션과 해시태그를 자동으로 써 뒀어요. 고친 뒤 "인스타로 보내기"를 누르면 캡션이 복사되고, 휴대폰에서는 공유 창이 열려요. 공유 창에서 Instagram을 고르고 8장을 피드에 올린 뒤 캡션 칸에 붙여 넣으세요. 컴퓨터에서는 8장을 내려받고 인스타그램 웹을 열어 줘요.</p>
     <textarea id="igCap" style="height:220px;font-family:inherit;font-size:14px"></textarea>
     <p class="hint" id="igCnt" style="margin:4px 0 0;text-align:right"></p>
@@ -1440,36 +1488,39 @@ function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 var FIXM=[],FIXJ='',CT='sp',DT='sp',KEYS=['cover','s2','s3','s4','s5','s6','s7','s8'];
 function pk(k){return CT==='biz'?'b'+k:k}
 function buildFix(){
- var n=FIXM.length,btn=$('fixT');
- $('fixCount').textContent=n?'('+n+'건)':'(고칠 것 없음)';
- btn.className='btn'+(n?' bad':' good');
+ var n=FIXM.length;
+ $('fixCount').textContent=n?n+'건':'없음 (문장을 직접 고치고 싶으면 펼치세요)';
+ $('fixD').classList.toggle('bad',!!n);$('fixD').open=!!n;
  if(!n){$('fixTxt').value='';$('fixHint').textContent='지금은 고칠 내용이 없어요. 문장을 직접 바꾸고 싶으면 아래 칸의 "고칠 내용"만 직접 쓰고 복사할 수도 있어요.';
   var base=PROMPTS[CT==='biz'?'bfix':'fix'];$('fixTxt').value=base.replace(/\(예:[^\n]*\)/,'(바꾸고 싶은 내용을 여기에 쓰세요. 예: "s3 제목을 ~로 바꿔 줘")').replace('(여기에 JSON을 붙여 넣으세요)',function(){return FIXJ});return}
- $('fixHint').textContent='빨간 글씨로 뜬 내용 '+n+'건을 자동으로 넣었어요. 복사해서 제미나이에 붙여 넣고, 받은 JSON을 2번 칸에 다시 붙여 넣으세요.';
+ $('fixHint').textContent='빨간 글씨로 뜬 내용 '+n+'건을 자동으로 넣었어요. 제미나이에 보내고, 받은 JSON을 위 원고 칸에 다시 붙여 넣으세요.';
  var list=FIXM.map(function(x){return '- '+x}).join('\n');
  var t=PROMPTS[CT==='biz'?'bfix':'fix'];
  t=t.replace(/\(예:[^\n]*\)/,function(){return list}).replace('(여기에 JSON을 붙여 넣으세요)',function(){return FIXJ});
  $('fixTxt').value=t;
 }
+var MAKE_ID=0,MAKE_SRC='';
 async function make(){
- $('msgs').innerHTML='';$('grid').innerHTML='';$('stage').innerHTML='';$('save').disabled=true;DATA=null;FIXM=[];FIXJ=$('json').value;
+ var myId=++MAKE_ID;MAKE_SRC=$('json').value;
+ $('msgs').innerHTML='';$('grid').innerHTML='';$('pvBar').style.display='none';$('stage').innerHTML='';$('save').disabled=true;DATA=null;FIXM=[];FIXJ=$('json').value;
  var d;
  var pr;try{pr=parseJson($('json').value)}catch(e){msg('err',e.message);FIXM.push('원고가 JSON 형식이 아니에요: '+e.message.slice(0,160));buildFix();return}
  d=norm(pr.d);
  var biz=d.type==='biz'||!!(d.s2&&d.s2.blocks);
  if(biz!==(CT==='biz'))setType(biz?'biz':'sp');
- DT=biz?'biz':'sp';
+ DT=biz?'biz':'sp';langSync(d.lang);
  if(biz)d=bzNorm(d);
  if(pr.fixed)msg('info','원고의 형식 오류(글 안의 큰따옴표 등)를 자동으로 고쳤어요. 문장이 이상하지 않은지 미리보기에서 확인해 주세요.');
  var af=biz?bzAutoFix(d):autoFix(d);d=af.d;FIXJ=JSON.stringify(d,null,1);
  var c=biz?bzChk(d):chk(d);
  c.E.slice(0,6).forEach(function(t){msg('err',t)});if(c.E.length>6)msg('err','…외 '+(c.E.length-6)+'개 항목이 더 빠졌거나 틀렸어요.');
- if(c.E.length){c.E.forEach(function(x){FIXM.push(x)});msg('err','위 오류가 있어요. 아래 "수정 프롬프트 복사하기"를 눌러 제미나이에 붙여 넣으면 고쳐 줘요.');buildFix();$('fixBox').style.display='block';return}
+ if(c.E.length){c.E.forEach(function(x){FIXM.push(x)});msg('err','위 오류가 있어요. 아래 "고칠 것"에서 수정 프롬프트를 제미나이에 보내면 고쳐 줘요.');buildFix();return}
  NO=parseInt($('issue').value,10)||1;var date=$('date').value||today();
  var st=$('stage');st.innerHTML='';
  for(var i=0;i<8;i++)st.insertAdjacentHTML('beforeend',thHtml(dzWrap((biz?bzSlideHtml:slideHtml)(d,i,NO,date),i)));
  try{await document.fonts.ready}catch(e){}
  await new Promise(function(r){setTimeout(r,250)});
+ if(myId!==MAKE_ID)return; // 그사이 새로 만들기를 시작했으면 이 결과는 버린다
  var slides=st.querySelectorAll('.sl,.bz'),reps=[],bad=0;
  for(var i=0;i<slides.length;i++)reps.push((biz?bzLayout:layout)(slides[i],i));
  c.W.forEach(function(t){msg('warn',t);FIXM.push(t)});
@@ -1492,12 +1543,10 @@ async function make(){
  fit();
  DATA=d;$('save').disabled=false;
  if(d.lang==='ko')lsSet('koJson_'+DT,JSON.stringify(d,null,1));
- $('enCopy').style.display=$('enCopyG').style.display=d.lang==='ko'?'inline-block':'none';
  if(window.showP)window.showP(window.curP||'make');
- buildFix();
- if(FIXM.length){$('fixBox').style.display='block'}
- if(!c.W.length&&!bad)msg('ok','문제없이 만들어졌어요. 미리보기를 더블클릭해 크게 확인하고 JPG로 저장하세요.');
- else if(bad)msg('warn','자동으로 맞추지 못한 장이 '+bad+'개 있어요(빨간 표시). 아래 "수정 프롬프트 복사하기"를 누르면 고칠 내용이 정리돼요.');
+ buildFix();pvCap();
+ if(!c.W.length&&!bad)msg('ok','문제없이 만들어졌어요. 맨 위 미리보기를 옆으로 넘겨 확인하세요.');
+ else if(bad)msg('warn','자동으로 맞추지 못한 장이 '+bad+'개 있어요(빨간 표시). 아래 "고칠 것"에 고칠 내용이 정리돼 있어요.');
 }
 function fit(){
  document.querySelectorAll('.pv').forEach(function(p){var s=p.getBoundingClientRect().width/1080;p.firstChild.style.transform='scale('+s+')'});
@@ -2011,7 +2060,6 @@ function setType(k){
  }
  $('copyP').onclick=function(){copyOf($('prompt'),$('copied'),'복사했어요. 제미나이에 붙여 넣으세요.')};
  $('fixCopy').onclick=function(){copyOf($('fixTxt'),$('fixOk'),'복사했어요. 제미나이에 붙여 넣고, 받은 JSON을 2번 칸에 다시 넣으세요.')};
- $('fixT').onclick=function(){var b=$('fixBox');b.style.display=b.style.display==='none'?'block':'none'};
  $('enCopy').onclick=function(){
   var t=enFill(PROMPTS[DT==='biz'?'ben':'en'],DT);
   copyText(t).then(function(){$('saving').textContent='영문판 프롬프트를 복사했어요(국문 원고 포함). 제미나이에 붙여 넣고, 받은 영문 JSON을 2번에 넣어 카드를 만드세요.'},function(){showP('en');$('saving').textContent='자동 복사가 안 돼서 1번의 영문 탭에 띄웠어요. 거기서 "프롬프트 복사"를 눌러 주세요.'});
@@ -2059,7 +2107,7 @@ function igCaption(d,t){
  return o.join('\n');
 }
 function igEnter(){
- if(!DATA){$('igMsg').textContent='2단계에서 카드를 먼저 만들어 주세요.';$('igGo').disabled=true;return}
+ if(!DATA){$('igMsg').textContent='3단계에서 카드를 먼저 만들어 주세요.';$('igGo').disabled=true;return}
  $('igGo').disabled=false;
  if($('igCap').dataset.for!==String(NO)+DATA.lang+DT||!$('igCap').value){$('igCap').value=igCaption(DATA,DT);$('igCap').dataset.for=String(NO)+DATA.lang+DT}
  $('igCnt').textContent=$('igCap').value.length+' / 2200자';
@@ -2082,8 +2130,8 @@ function igGo(){
 }
 
 /* ===== 한 단계씩 진행 ===== */
-var CUR_ST='1',ST_SEQ=['1','2','3','4'];
-var ST_NEXT={d:'1단계로',1:'다음: 원고 붙여 넣기',2:'카드 만들고 다음으로',3:'다음: 인스타 올리기',4:'처음으로(다음 호 만들기)'};
+var CUR_ST='1',ST_SEQ=['1','2','3','4','5','6','7'];
+var ST_NEXT={1:'다음: 제미나이로',2:'다음: 원고 붙여 넣기',3:'카드 만들고 다음으로',4:'다음: 디자인',5:'다음: 저장',6:'다음: 인스타 올리기',7:'처음으로(다음 호 만들기)'};
 function goStep(st){
  CUR_ST=String(st);
  document.querySelectorAll('.app .step').forEach(function(s){s.classList.toggle('cur',s.dataset.st===CUR_ST)});
@@ -2091,20 +2139,25 @@ function goStep(st){
  var wb=document.querySelector('#wz button.on'),wz=$('wz');if(wb)wz.scrollLeft=Math.max(0,wb.offsetLeft-wz.offsetLeft-(wz.clientWidth-wb.offsetWidth)/2);
  var k=ST_SEQ.indexOf(CUR_ST);
  $('wzPrev').disabled=k<=0;$('wzNext').textContent=ST_NEXT[CUR_ST];
- $('wzPos').textContent=CUR_ST==='d'?'디자인(선택)':(k+1)+' / '+ST_SEQ.length;
+ $('wzPos').textContent=(k+1)+' / '+ST_SEQ.length;
  window.scrollTo(0,0);
- if(CUR_ST==='3')fit();
- if(CUR_ST==='4')igEnter();
+ if(CUR_ST==='3')nextLabel();
+ if(CUR_ST==='4')issueInfo();
+ if(CUR_ST==='7')igEnter();
 }
-async function makeAndGo(){await make();if(DATA)goStep('3')}
+// 원고에 고칠 게 없으면 바로 다음 단계로, 있으면 3단계에 남아 "고칠 것"을 펼쳐 보여 준다
+async function makeAndGo(){
+ await make();
+ if(DATA&&!FIXM.length)return goStep(LANG==='en'?'6':'4');
+ nextLabel();$('fixD').scrollIntoView({block:'center',behavior:'smooth'});
+}
 (function(){
  document.querySelector('.app').classList.add('wz-on');
  $('wz').onclick=function(e){var b=e.target.closest('button');if(b)goStep(b.dataset.go)};
  $('wzPrev').onclick=function(){var k=ST_SEQ.indexOf(CUR_ST);if(k>0)goStep(ST_SEQ[k-1])};
  $('wzNext').onclick=function(){
-  if(CUR_ST==='d')return goStep('1');
-  if(CUR_ST==='2')return makeAndGo();
-  if(CUR_ST==='4')return goStep('1');
+  if(CUR_ST==='3')return DATA&&$('json').value===MADE_FOR?goStep(LANG==='en'?'6':'4'):makeAndGo();
+  if(CUR_ST==='7')return goStep('1');
   goStep(ST_SEQ[ST_SEQ.indexOf(CUR_ST)+1]);
  };
  $('make').onclick=makeAndGo;
@@ -2114,16 +2167,89 @@ async function makeAndGo(){await make();if(DATA)goStep('3')}
   var w=window.open(GEM,'_blank','noopener');
   copyText(text).then(function(){msgEl.textContent=w?'복사했어요. 열린 제미나이에 붙여 넣으세요.'+(tail||''):'복사했어요. 제미나이 창이 막혀서 열지 못했어요. gemini.google.com을 직접 열어 붙여 넣으세요.'+(tail||'')},function(){msgEl.textContent='자동 복사가 안 됐어요. 위 칸의 글을 직접 복사해 제미나이에 붙여 넣어 주세요.'});
  }
- $('copyG').onclick=function(){copyOpen($('prompt').value,$('copied'))};
+ window.copyOpen=copyOpen;
+ $('copyG').onclick=function(){copyOpen($('prompt').value,$('copied'),' 받은 답변은 3단계에 붙여 넣으세요.')};
  $('dzCopyG').onclick=function(){$('dzPrompt').value=PROMPTS.design;copyOpen(PROMPTS.design,$('dzCopied'),' 참고 이미지도 같이 첨부하세요.')};
- $('fixCopyG').onclick=function(){copyOpen($('fixTxt').value,$('fixOk'),' 받은 JSON을 2번 칸에 다시 넣으세요.')};
- $('enCopyG').onclick=function(){copyOpen(enFill(PROMPTS[DT==='biz'?'ben':'en'],DT),$('saving'),' 받은 영문 JSON을 2번에 넣어 카드를 만드세요.')};
+ $('fixCopyG').onclick=function(){copyOpen($('fixTxt').value,$('fixOk'),' 받은 JSON을 위 원고 칸에 다시 붙여 넣으세요.')};
  $('igGo').onclick=igGo;
  $('igCopy').onclick=function(){copyText($('igCap').value).then(function(){$('igMsg').textContent='캡션을 복사했어요.'},function(){$('igMsg').textContent='복사에 실패했어요. 캡션을 직접 드래그해서 복사해 주세요.'})};
  $('igRe').onclick=function(){if(DATA){$('igCap').value=igCaption(DATA,DT);$('igCap').oninput()}};
  $('igCap').oninput=function(){$('igCnt').textContent=$('igCap').value.length+' / 2200자'};
  goStep('1');
 })();
+/* ===== 원고 단계: 국문/영문 전환, 붙여넣기, 미리보기 줄 ===== */
+var LANG='ko',MADE_FOR=null;
+function msKey(t,l){return 'ms_'+t+'_'+l}
+function msSave(){lsSet(msKey(CT,LANG),$('json').value)}
+// opt.save: 지금 칸의 글을 원래 언어 자리에 저장, opt.load: 바꾼 언어의 글을 칸에 불러오기
+function setLang(l,opt){
+ opt=opt||{};
+ if(opt.save!==false)msSave();
+ LANG=l==='en'?'en':'ko';
+ if(opt.load!==false)$('json').value=lsGet(msKey(CT,LANG))||'';
+ document.querySelectorAll('#langT button').forEach(function(b){b.classList.toggle('on',b.dataset.l===LANG)});
+ $('enHelp').style.display=LANG==='en'?'block':'none';
+ $('json').placeholder=LANG==='en'?'{ "lang": "en", ... }  제미나이가 준 영문 JSON을 붙여 넣어요':'{ "lang": "ko", ... }';
+ enHelpUpdate();nextLabel();
+}
+// make()가 원고의 lang을 보고 전환 버튼을 맞춘다(국문 칸에 영문을 넣어도 알아서 영문으로)
+function langSync(l){
+ l=l==='en'?'en':'ko';
+ if(l!==LANG)setLang(l,{save:false,load:false});
+ msSave();
+}
+function enHelpUpdate(){
+ var has=!!lsGet('koJson_'+CT);
+ $('enCopy').disabled=$('enCopyG').disabled=!has;
+ $('enMsg').textContent=has?'':'국문 카드를 먼저 만들어 주세요. 국문 원고가 있어야 영문으로 옮길 수 있어요.';
+}
+function pvCap(){
+ MADE_FOR=MAKE_SRC;
+ $('pvBar').style.display='block';fit();$('intro').style.display='none';
+ $('pvCap').textContent='미리보기: '+(DATA.lang==='en'?'영문':'국문')+' '+NO+'호 ('+(DT==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스')+'). 옆으로 넘겨 보고, 누르면 크게 볼 수 있어요.';
+ $('goEn').style.display=DATA.lang==='ko'?'inline-block':'none';
+ $('goKo').style.display=DATA.lang==='en'&&lsGet(msKey(CT,'ko'))?'inline-block':'none';
+ enHelpUpdate();nextLabel();
+}
+// 3단계 "다음" 버튼: 원고가 바뀌었으면 카드를 만들고, 이미 만들었으면 다음 단계로
+function nextLabel(){
+ if(typeof CUR_ST==='undefined'||CUR_ST!=='3')return;
+ var made=DATA&&$('json').value===MADE_FOR;
+ $('wzNext').textContent=!made?'카드 만들고 다음으로':FIXM.length?'고칠 게 있지만 그대로 다음으로':LANG==='en'?'다음: 저장':'다음: 발행호 확인';
+}
+(function(){
+ $('langT').onclick=function(e){
+  var b=e.target.closest('button');if(!b||b.dataset.l===LANG)return;
+  setLang(b.dataset.l);
+  if($('json').value.trim())make();
+ };
+ $('json').addEventListener('input',function(){msSave();nextLabel()});
+ $('jPaste').onclick=function(){
+  if(!(navigator.clipboard&&navigator.clipboard.readText)){$('json').focus();$('jMsg').textContent='자동 붙여넣기를 쓸 수 없어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣어 주세요.';return}
+  navigator.clipboard.readText().then(function(t){
+   if(!t||t.indexOf('{')<0){$('jMsg').textContent='복사한 글에 원고(JSON)가 없어요. 제미나이 답변의 코드 블록을 복사해 왔는지 확인해 주세요.';return}
+   $('json').value=t;msSave();$('jMsg').textContent='붙여 넣었어요.';makeAndGo();
+  },function(){$('json').focus();$('jMsg').textContent='브라우저가 붙여넣기를 막았어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣은 뒤 "카드 만들기"를 눌러 주세요.'});
+ };
+ $('jClear').onclick=function(){$('json').value='';msSave();$('json').focus();$('jMsg').textContent='지웠어요. 새 원고를 붙여 넣으세요.';nextLabel()};
+ $('pReset').onclick=function(){showP('make');$('copied').textContent='원래 프롬프트로 돌렸어요.'};
+ // 카드 종류를 바꾸면 그 종류의 원고를 불러온다
+ var oldType=$('ctype').onchange;
+ $('ctype').onchange=function(){msSave();oldType();setLang(LANG,{save:false})};
+ // 호 번호와 발행일을 바꾸면 카드에 바로 반영
+ ['issue','date'].forEach(function(id){$(id).addEventListener('change',function(){if(DATA)make().then(issueInfo)})});
+ $('goEn').onclick=function(){setLang('en');goStep('3');if($('json').value.trim())make()};
+ $('goKo').onclick=function(){setLang('ko');if($('json').value.trim())make()};
+ $('enCopy').onclick=function(){copyText(enFill(PROMPTS[CT==='biz'?'ben':'en'],CT)).then(function(){$('enMsg').textContent='복사했어요(국문 원고 포함). 제미나이에 붙여 넣고, 받은 영문 JSON을 아래 칸에 붙여 넣으세요.'},function(){$('enMsg').textContent='자동 복사가 안 됐어요.'})};
+ $('enCopyG').onclick=function(){copyOpen(enFill(PROMPTS[CT==='biz'?'ben':'en'],CT),$('enMsg'),' 받은 영문 JSON을 아래 칸에 붙여 넣으세요.')};
+ $('exKo').onclick=function(){var biz=CT==='biz';setLang('ko');$('json').value=JSON.stringify(biz?EXAMPLES.bko:EXAMPLES.ko,null,2);msSave();$('issue').value=biz?1:4;$('date').value=biz?'2026.10.22':'2026.10.23';nextLabel()};
+ $('exEn').onclick=function(){var biz=CT==='biz';setLang('en');$('json').value=JSON.stringify(biz?EXAMPLES.ben:EXAMPLES.en,null,2);msSave();$('issue').value=biz?1:4;$('date').value=biz?'2026.10.22':'2026.10.23';nextLabel()};
+ setLang('ko',{save:false});
+})();
+function issueInfo(){
+ var a=histGet(CT),last=a[a.length-1];
+ $('issueInfo').textContent='이번 호는 '+($('issue').value||'?')+'호예요. 지난 호: '+(last?histLine(last,CT):'없음(첫 호)')+'. 호 번호와 발행일을 바꾸면 미리보기에 바로 반영돼요.';
+}
 </script>
 </body>
 </html>
