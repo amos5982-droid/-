@@ -123,17 +123,6 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chips button{width:34px;height:34px;border-radius:8px;border:2px solid #3a3e55;cursor:pointer;padding:0}
 .row input[type=color]{width:46px;height:34px;border:1px solid #3a3e55;border-radius:8px;background:#0e0f14;padding:2px;cursor:pointer}
-/* 색 고르기 창(사진에서 뽑은 색) */
-#thPop{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px}
-#thPop.on{display:flex}
-#thPop .box{background:#171923;border:1px solid #2a2d3d;border-radius:16px;padding:20px;width:min(360px,100%);box-shadow:0 18px 40px rgba(0,0,0,.45)}
-#thPop h3{margin:0 0 4px;font-size:17px;font-weight:800}
-#thPop .pg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
-#thPop .pg button{aspect-ratio:1;border-radius:12px;border:2px solid #3a3e55;cursor:pointer;padding:0;position:relative}
-#thPop .pg button.on{border-color:#fff;box-shadow:0 0 0 3px #ffc53d}
-#thPop .pg button span{position:absolute;left:0;right:0;bottom:-18px;font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa0b8}
-#thPop .pg{row-gap:26px}
-#thPop .ft{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
 </style>
 <style id="cardCss">
 /* ===== 카드(1080x1350) ===== */
@@ -275,6 +264,17 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .savel .sv{display:flex;flex-direction:column;gap:6px;text-decoration:none;color:#c5c8da;font-size:13px;font-weight:700;text-align:center}
 .savel .sv img{width:100%;aspect-ratio:1080/1350;object-fit:cover;border-radius:8px;border:1px solid #2a2d3d;-webkit-touch-callout:default}
 .savel .sv span{background:#20233a;border:1px solid #3a3e55;border-radius:8px;padding:6px 0}
+.swb{width:46px;height:34px;flex:none;border-radius:8px;border:2px solid #3a3e55;cursor:pointer;padding:0}
+.cpn{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.cpop{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.55);display:none;align-items:flex-end;justify-content:center}
+.cpop.on{display:flex}
+.cpbox{width:min(560px,100%);max-height:86vh;overflow:auto;background:#171923;border:1px solid #2a2d3d;border-radius:18px 18px 0 0;padding:18px 18px 22px}
+.cpbox h3{margin:0 0 4px;font-size:17px}
+.cpbox h4{margin:14px 0 8px;font-size:14px;color:#c5c8da}
+.cpg{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cpg button{aspect-ratio:1.6;border-radius:8px;border:2px solid rgba(255,255,255,.12);cursor:pointer;padding:0}
+.cpg button.on{border-color:#ffc53d;box-shadow:0 0 0 2px #ffc53d}
+@media (min-width:721px){.cpop{align-items:center}.cpbox{border-radius:18px}}
 .lnk{font:inherit;font-size:13px;background:none;border:0;color:#ffc53d;text-decoration:underline;cursor:pointer;padding:0 2px}
 .fixd{margin-top:14px;border:1px solid #2a2d3d;border-radius:10px;padding:10px 14px}
 .fixd summary{cursor:pointer;font-weight:800;font-size:14px;color:#9ae6b4}
@@ -825,10 +825,10 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <div class="drop" id="thDrop">이미지를 여기로 끌어다 놓거나 <b>클릭해서 고르세요</b>. 복사한 이미지는 Ctrl+V로 붙여 넣어도 돼요.<input type="file" id="thFile" accept="image/*" hidden></div>
     <div class="row" id="thRow">
       <img id="thImg" alt="참고 이미지" style="display:none">
-      <div id="thPalW" style="display:none"><div class="chips" id="thPal"></div><p class="hint" style="margin:6px 0 0">뽑은 색: 누르면 주색이 돼요. 주색, 강조색, 밝은 배경 칸을 누르면 이 색들 중에서 고를 수 있어요.</p></div>
-      <label>주색 <input type="color" id="thP"><input type="text" class="hex" id="thPx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
-      <label>강조색 <input type="color" id="thA"><input type="text" class="hex" id="thAx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
-      <label>밝은 배경 <input type="color" id="thL"><input type="text" class="hex" id="thLx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
+      <div id="thPalW" style="display:none"><div class="chips" id="thPal"></div><p class="hint" style="margin:6px 0 0">뽑은 색: 누르면 주색, Shift+클릭하면 강조색</p></div>
+      <label>주색 <button type="button" class="swb" id="thPb" data-cp="P" title="눌러서 색 고르기"></button><input type="color" id="thP" class="cpn" tabindex="-1"><input type="text" class="hex" id="thPx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
+      <label>강조색 <button type="button" class="swb" id="thAb" data-cp="A" title="눌러서 색 고르기"></button><input type="color" id="thA" class="cpn" tabindex="-1"><input type="text" class="hex" id="thAx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
+      <label>밝은 배경 <button type="button" class="swb" id="thLb" data-cp="L" title="눌러서 색 고르기"></button><input type="color" id="thL" class="cpn" tabindex="-1"><input type="text" class="hex" id="thLx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
       <button class="btn" id="thSwap">주색↔강조색</button>
       <button class="btn" id="thReset">원래 색으로</button>
       <label title="켜 두면 제미나이 디자인 JSON에 들어 있는 색은 쓰지 않고, 여기서 고른 색을 유지해요."><input type="checkbox" id="thLock"> 내 색 고정(디자인 적용 때 색은 안 바꿈)</label>
@@ -873,7 +873,15 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 </div>
 <div id="stage"></div>
 <div id="toast"></div>
-<div id="thPop" role="dialog" aria-modal="true" aria-labelledby="thPopT"><div class="box"><h3 id="thPopT">색 고르기</h3><p class="hint" style="margin:0">올린 사진에서 뽑은 색이에요.</p><div class="pg" id="thPopG"></div><div class="ft"><button class="btn" id="thPopOwn">다른 색 직접 고르기</button><button class="btn" id="thPopX">닫기</button></div></div></div>
+<div id="cpop" class="cpop"><div class="cpbox">
+  <h3 id="cpT">색 고르기</h3>
+  <p class="hint" id="cpH" style="margin:0 0 8px"></p>
+  <div id="cpImg" class="cpg"></div>
+  <h4>기본 색</h4>
+  <div id="cpBase" class="cpg"></div>
+  <div class="row"><input type="text" class="hex" id="cpHex" maxlength="7" spellcheck="false" placeholder="#2b2f88"><button class="btn pri" id="cpOk">코드로 적용</button></div>
+  <div class="row"><button class="btn" id="cpNative">휴대폰 기본 색상표</button><button class="btn" id="cpClose">닫기</button></div>
+</div></div>
 <div id="zoom"><div class="box" id="zbox"></div><div class="bar2"><button id="zprev">이전</button><span id="zcap"></span><button id="znext">다음</button><button id="zclose">닫기</button></div></div>
 
 <script>
@@ -1168,7 +1176,7 @@ function bzArcs(w,h,cx,cy,radii,sw,color,style){
  var o=radii.map(function(r){return '<path d="M'+(cx-r)+' '+cy+' A'+r+' '+r+' 0 0 1 '+(cx+r)+' '+cy+'" fill="none" stroke="currentColor" stroke-width="'+sw+'"/>'}).join('');
  return '<svg class="dcs" aria-hidden="true" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" style="'+style+';color:'+color+'">'+o+'</svg>';
 }
-var BZ_DECO_DEFAULT={0:['sun','arcs-br','arcs-bl'],1:['trend'],2:['burst'],6:['burst']};
+var BZ_DECO_DEFAULT={0:['sun','arcs-br','arcs-bl'],2:['burst'],6:['burst']};
 function bzDecoPreset(n,th){
  var dark=th==='dark',yel=th==='yel';
  var ac=dark?'#EBF173':'#2B2F88';
@@ -1216,8 +1224,8 @@ function bzDecos(s,i,th){
  if(!Array.isArray(list))list=[];
  var o='';
  list.forEach(function(x){
-  if(typeof x==='string')o+=bzDecoPreset(x,th);
-  else if(x&&x.svg){
+  if(typeof x==='string'){if(x!=='ball'&&x!=='trend')o+=bzDecoPreset(x,th)}
+  else if(false&&x&&x.svg){ // 제미나이가 직접 그린 그림은 어설퍼서 쓰지 않는다
    var c=bzCleanSvg(x.svg,th,+x.size||+x.width||+x.height||0);if(!c)return;
    var ac=th==='dark'?'#EBF173':'#2B2F88',pos='';
    ['left','right','top','bottom'].forEach(function(k){if(x[k]!=null&&isFinite(+x[k]))pos+=k+':'+Math.round(+x[k])+'px;'});
@@ -1715,7 +1723,7 @@ function thApply(p,a,quiet,noMake){
  if(DATA&&!noMake)make();
 }
 // 색 고르기 칸의 값을 옆 색상 코드 칸에도 보여 준다
-function thSyncHex(){['P','A','L'].forEach(function(k){var x=$('th'+k+'x');x.value=$('th'+k).value;x.classList.remove('bad')})}
+function thSyncHex(){['P','A','L'].forEach(function(k){var x=$('th'+k+'x');x.value=$('th'+k).value;x.classList.remove('bad');$('th'+k+'b').style.background=$('th'+k).value})}
 function thSave(){thSyncHex();lsSet('theme',TH.p||TH.light?JSON.stringify({p:TH.p,a:TH.a,l:TH.light}):'')}
 // 밝은 배경은 글자가 잘 보이도록 아주 밝게만 쓴다
 function thLight(h){if(!h)return null;var x=rgb2hsl(hex2rgb(h));if(x[2]<.9)x[2]=.93;return rgb2hex(hsl2rgb(x))}
@@ -1739,27 +1747,14 @@ function thExtract(img){
  var a=A&&A.cr>=.15?A.hex:rgb2hex(hsl2rgb([P.h[0],P.h[1]*.6,.85]));
  return {p:P.hex,a:a,pal:pal.map(function(o){return o.hex})};
 }
-var TH_PAL=[];
-function thPalShow(pal){
- TH_PAL=(pal||[]).slice(0,8);lsSet('thPal',TH_PAL.length?JSON.stringify(TH_PAL):'');
- $('thPalW').style.display=TH_PAL.length?'':'none';
- $('thPal').innerHTML=TH_PAL.map(function(h){return '<button type="button" title="'+h+'" data-c="'+h+'" style="background:'+h+'"></button>'}).join('');
-}
-var TH_NAME={P:'주색',A:'강조색',L:'밝은 배경'},TH_OWN=false,TH_FOR=null;
-function thPopOpen(k){
- TH_FOR=k;var cur=$('th'+k).value.toLowerCase();
- $('thPopT').textContent=TH_NAME[k]+' 고르기';
- $('thPopG').innerHTML=TH_PAL.map(function(h){return '<button type="button" data-c="'+h+'" class="'+(h.toLowerCase()===cur?'on':'')+'" style="background:'+h+'" aria-label="'+h+'"><span>'+h+'</span></button>'}).join('');
- $('thPop').classList.add('on');
-}
-function thPopClose(){$('thPop').classList.remove('on');TH_FOR=null}
 function thLoad(file){
  if(!file||!/^image\//.test(file.type)){$('thHint').textContent='이미지 파일(JPG, PNG, WEBP 등)을 넣어 주세요.';return}
  var url=URL.createObjectURL(file),img=new Image();
  img.onload=function(){
   var r=thExtract(img);if(!r){$('thHint').textContent='색을 뽑지 못했어요. 투명하지 않은 이미지를 넣어 주세요.';return}
-  $('thImg').src=url;$('thImg').style.display='';
-  thPalShow(r.pal);
+  $('thImg').src=url;$('thImg').style.display='';$('thPalW').style.display='';
+  TH_PAL=r.pal;lsSet('thPal',JSON.stringify(r.pal));
+  $('thPal').innerHTML=r.pal.map(function(h){return '<button type="button" title="'+h+'" data-c="'+h+'" style="background:'+h+'"></button>'}).join('');
   thApply(r.p,r.a);
  };
  img.onerror=function(){$('thHint').textContent='이미지를 열지 못했어요. 다른 파일로 해 주세요.'};
@@ -1774,14 +1769,6 @@ function thLoad(file){
  dr.addEventListener('drop',function(e){e.preventDefault();dr.classList.remove('ov');thLoad(e.dataTransfer.files[0])});
  document.addEventListener('paste',function(e){var it=[].slice.call((e.clipboardData||{}).items||[]).filter(function(x){return x.kind==='file'&&/^image\//.test(x.type)})[0];if(it){e.preventDefault();thLoad(it.getAsFile())}});
  $('thPal').onclick=function(e){var b=e.target.closest('button');if(!b)return;e.shiftKey?thApply(TH.p,b.dataset.c):thApply(b.dataset.c,TH.a)};
- // 색 칸을 누르면 휴대폰 기본 색상표 대신 사진에서 뽑은 색을 먼저 보여 준다(뽑은 색이 없으면 기본 색상표)
- ['P','A','L'].forEach(function(k){$('th'+k).addEventListener('click',function(e){if(TH_OWN||!TH_PAL.length)return;e.preventDefault();thPopOpen(k)})});
- $('thPopG').onclick=function(e){var b=e.target.closest('button');if(!b||!TH_FOR)return;var k=TH_FOR,inp=$('th'+k);thPopClose();inp.value=b.dataset.c;inp.onchange()};
- $('thPopOwn').onclick=function(){var inp=$('th'+TH_FOR);thPopClose();TH_OWN=true;try{if(inp.showPicker)inp.showPicker();else inp.click()}catch(e){inp.click()}setTimeout(function(){TH_OWN=false},0)};
- $('thPopX').onclick=thPopClose;
- $('thPop').addEventListener('click',function(e){if(e.target===this)thPopClose()});
- document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('thPop').classList.contains('on'))thPopClose()});
- try{var sp=JSON.parse(lsGet('thPal')||'[]');if(Array.isArray(sp)&&sp.length)thPalShow(sp)}catch(e){}
  $('thP').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thA').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thSwap').onclick=function(){if(TH.on)thApply(TH.a,TH.p)};
@@ -1795,7 +1782,7 @@ function thLoad(file){
  });
  $('thL').onchange=function(){thSetLight($('thL').value);$('thHint').textContent='밝은 배경을 '+TH.light+'로 바꿨어요.'};
  $('thLock').onchange=function(){lsSet('thLock',this.checked?'1':'')};$('thLock').checked=!!lsGet('thLock');
- $('thReset').onclick=function(){TH.light=null;$('thL').value='#f2f3f6';thApply(null);thPalShow([]);$('thImg').removeAttribute('src');$('thImg').style.display='none';$('thHint').textContent='원래 색으로 돌렸어요.'};
+ $('thReset').onclick=function(){TH.light=null;$('thL').value='#f2f3f6';thApply(null);$('thPalW').style.display='none';$('thPal').innerHTML='';TH_PAL=null;lsSet('thPal','');$('thImg').removeAttribute('src');$('thImg').style.display='none';$('thHint').textContent='원래 색으로 돌렸어요.'};
  $('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1;$('thL').value='#f2f3f6';thSyncHex();
  var sv;try{sv=JSON.parse(lsGet('theme')||'null')}catch(e){}
  if(sv){if(sv.l)thSetLight(sv.l,true);if(sv.p)thApply(sv.p,sv.a,true);$('thHint').textContent='지난번에 쓴 색을 불러왔어요. 원래 색으로 돌리려면 "원래 색으로"를 누르세요.'}
@@ -1811,6 +1798,7 @@ function dzSlides(v,def){
  v=String(v==null?def:v).toLowerCase();
  return {cover:[0],first:[0],odd:[0,2,4,6],even:[1,3,5,7],inner:[1,2,3,4,5,6,7],none:[]}[v]||[0,1,2,3,4,5,6,7];
 }
+var DZ_SHAPES_OFF=['square','triangle','diamond','star','burst','plus','cross','ball'];
 var DZ_SHAPES=['circle','ring','half','quarter','square','triangle','diamond','star','burst','plus','cross','zigzag','wave','stripes','dots','arcs','blob','slash','halftone','ball'];
 var DZ_SIZE={s:120,m:220,l:400,xl:640};
 function dzNorm(o){
@@ -1840,13 +1828,15 @@ function dzNorm(o){
  if(po>PCAP[z.pattern]&&z.pattern!=='none')z.notes.push(DZ_LB.pattern[z.pattern]+' 투명도를 '+po+'에서 '+PCAP[z.pattern]+'로 낮춤');
  z.pop=Math.max(.03,Math.min(PCAP[z.pattern]||.06,po));
  z.pslides=dzSlides(b.slides,'all');
+ var dropped=0;
  z.decos=(Array.isArray(o.decos)?o.decos:[]).slice(0,8).map(function(x){
   if(!x||typeof x!=='object')return null;
-  var d={shape:dzPick(x.shape,DZ_SHAPES,null),svg:x.svg?String(x.svg):null};
-  if(!d.shape&&!d.svg)return null;
+  // 크게 깔리는 배경 그래픽만 쓴다. 단순 도형(네모, 세모, 별 등)과 직접 그린 그림은 어설퍼 보여서 뺀다
+  var d={shape:dzPick(x.shape,DZ_SHAPES,null),svg:null};
+  if(!d.shape||DZ_SHAPES_OFF.indexOf(d.shape)>=0){dropped++;return null}
   var p=String(x.pos||x.position||'tr').toLowerCase().replace(/top/g,'t').replace(/bottom/g,'b').replace(/left/g,'l').replace(/right/g,'r').replace(/center|middle/g,'c').replace(/[^tblrc]/g,'');
   d.pos=/^(tl|t|tr|l|c|r|bl|b|br)$/.test(p)?p:p==='lt'?'tl':p==='rt'?'tr':p==='lb'?'bl':p==='rb'?'br':'tr';
-  d.size=DZ_SIZE[String(x.size).toLowerCase()]||Math.max(40,Math.min(1000,parseFloat(x.size)||220));
+  d.size=Math.max(400,DZ_SIZE[String(x.size).toLowerCase()]||Math.min(1000,parseFloat(x.size)||400)); // 작은 장식은 쓰지 않는다
   d.color=dzPick(x.color,['primary','accent','fg','line','white'],'accent');
   d.opacity=Math.max(.05,Math.min(1,parseFloat(x.opacity)||(d.size>=380?.2:1)));
   if(d.pos==='c'||d.pos==='l'||d.pos==='r')d.opacity=Math.min(d.opacity,.2);
@@ -1857,6 +1847,7 @@ function dzNorm(o){
   if(d.size>=380&&d.bleed<.4&&d.opacity>.3){z.notes.push('큰 '+(d.shape||'직접 그린')+' 도형을 흐리게(투명도 0.3)');d.opacity=.3}
   return d;
  }).filter(Boolean);
+ if(dropped)z.notes.push('단순 도형과 직접 그린 그림 '+dropped+'개는 뺐어요');
  z.keep=o.keep_default_decos!=null?o.keep_default_decos===true:!z.decos.length;
  return z;
 }
@@ -2016,15 +2007,14 @@ function dzApply(z,quiet){
  '- bridge: 카드 아래 다음 장으로 넘기는 띠 모양. pill, box, outline, line(위쪽 선만).',
  '- header: 맨 위 로고 줄. plain 또는 line(아래 구분선).',
  '- background.pattern: 배경 전체 무늬. 기본은 none이다. 이미지의 배경 전체에 점, 격자, 줄, 빗금 같은 무늬가 뚜렷하게 깔려 있을 때만 dots, grid, lines, diagonal, halftone, gradient, frame 중 하나를 고르고, 아니면 반드시 none으로 둔다. 글자 뒤에 깔리므로 아주 옅게만 쓴다. opacity 상한: lines/diagonal 0.05, grid 0.07, dots/halftone 0.08, gradient/frame 0.3(넘기면 자동으로 낮춘다). 이미지에 무늬가 눈에 띄게 많아도 카드에서는 옅게 쓰거나 none으로 둔다. slides는 all, cover, inner(2~8장), odd, even 또는 [1,3,5] 같은 장 번호 목록.',
- '- decos: 이미지에 보이는 꾸밈 도형을 가장 비슷한 shape로 골라 최대 6개. 모든 장식은 글자 뒤에 깔린다.',
- '  - shape: circle, ring, half(반원), quarter(사분원), square, triangle, diamond, star, burst(빛살), plus, cross, zigzag, wave, stripes(줄무늬 사각), dots(점 격자), arcs(겹 반원), blob(유기적 덩어리), slash(굵은 사선), halftone(망점), ball(공)',
- '  - pos: tl, t, tr, l, c, r, bl, b, br(위/아래와 왼쪽/오른쪽 조합). size: s, m, l, xl 또는 40~1000 숫자(px). color: primary, accent, fg(글자색), line(옅은 글자색), white.',
+ '- decos: 이미지에서 크게 깔린 배경 그래픽만 가장 비슷한 shape로 골라 최대 3개. 모든 장식은 글자 뒤에 크게(l, xl) 깔린다. 네모, 세모, 별 같은 작은 단순 도형이나 아이콘은 쓰지 않는다. 어울리는 게 없으면 빈 목록 []으로 둔다.',
+ '  - shape: quarter(사분원), half(반원), circle(큰 원), ring(큰 고리), arcs(겹 반원), blob(유기적 덩어리), slash(굵은 사선 띠), stripes(줄무늬 면), dots(점 격자 면), halftone(망점 면), wave(물결), zigzag(지그재그)',
+ '  - pos: tl, t, tr, l, c, r, bl, b, br(위/아래와 왼쪽/오른쪽 조합). size: l, xl 또는 400~1000 숫자(px). color: primary, accent, fg(글자색), line(옅은 글자색), white.',
  '  - bleed: 0~0.6. 도형이 화면 밖으로 걸치는 비율. 큰 도형(l, xl)은 모서리에 두고 0.4 이상 걸쳐서 글자를 가리지 않게 해. 덜 걸치면 투명도가 0.3으로 낮춰진다.',
- '  - 가운데(c, l, r)에 두는 도형은 opacity 0.15 이하. 작은 도형(s, m)은 tr나 br처럼 제목과 겹치지 않는 모서리에.',
- '  - 정해진 shape로 표현이 안 되는 특별한 모양만 "shape" 대신 "svg"에 직접 그린 SVG를 넣어. path, circle, rect, line, polygon, polyline, ellipse, g만 쓰고 요소 60개 이하, 색은 currentColor.',
+ '  - 가운데(c, l, r)에 두는 도형은 opacity 0.15 이하. 직접 그린 SVG는 쓰지 않는다.',
  '- keep_default_decos: 원래 카드에 있던 기본 장식(빛살, 반원)을 남길지. 이미지 느낌과 다르면 false.',
  '- 정해진 값 외의 다른 값이나 다른 항목은 쓰지 마.'].join('\n');
- var EX={design:{summary:'굵은 사선과 각진 상자를 쓴 스트리트 포스터 느낌',palette:{primary:'#111827',accent:'#ff4d2e',light:'#f4f1ea'},slides:['dark','light','light','accent','light','dark','light','dark'],shape:'sharp',card:'offset',title:{align:'left',deco:'bar',weight:'black'},kicker:'box',bridge:'box',header:'line',background:{pattern:'none',slides:'all'},decos:[{shape:'slash',pos:'tr',size:'xl',color:'accent',opacity:1,bleed:.45,slides:'cover'},{shape:'halftone',pos:'bl',size:'l',color:'fg',opacity:.25,bleed:.3,slides:'cover'},{shape:'triangle',pos:'br',size:'s',color:'accent',rotate:15,slides:[2,4,6]}],keep_default_decos:false}};
+ var EX={design:{summary:'굵은 사선과 각진 상자를 쓴 스트리트 포스터 느낌',palette:{primary:'#111827',accent:'#ff4d2e',light:'#f4f1ea'},slides:['dark','light','light','accent','light','dark','light','dark'],shape:'sharp',card:'offset',title:{align:'left',deco:'bar',weight:'black'},kicker:'box',bridge:'box',header:'line',background:{pattern:'none',slides:'all'},decos:[{shape:'slash',pos:'tr',size:'xl',color:'accent',opacity:1,bleed:.45,slides:'cover'},{shape:'halftone',pos:'bl',size:'l',color:'fg',opacity:.25,bleed:.3,slides:'cover'},{shape:'quarter',pos:'br',size:'l',color:'accent',opacity:.9,bleed:.45,slides:[2,4,6]}],keep_default_decos:false}};
  $('dzCopy').onclick=function(){var ta=$('dzPrompt');ta.value=PROMPTS.design;ta.style.display='block';ta.focus();ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}
   if(!ok&&navigator.clipboard)navigator.clipboard.writeText(ta.value);$('dzCopied').textContent='복사했어요. 제미나이에 붙여 넣고 같은 이미지를 첨부하세요.';setTimeout(function(){$('dzCopied').textContent=''},5000)};
  $('dzGo').onclick=function(){
@@ -2438,6 +2428,35 @@ document.addEventListener('click',function(e){
  },function(){el.focus();toast('브라우저가 붙여넣기를 막았어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣어 주세요.')});
 });
 $('saveList').addEventListener('click',function(e){if(e.target.closest('.sv')&&recordIssue())$('saving').textContent=NO+'호를 발행 기록에 남겼어요.'});
+/* ===== 색상표: 사진에서 뽑은 색과 그 색의 밝기 단계로 고른다 ===== */
+var TH_PAL=null,CP_K='P';
+try{TH_PAL=JSON.parse(lsGet('thPal')||'null')}catch(e){}
+var CP_BASE=['#2b2f88','#ffc53d','#f2f3f6','#ffffff','#111827','#0b3d2e','#c8102e','#1d4ed8','#f97316','#6b21a8'];
+// 한 색을 어둡게부터 밝게까지 5단계로
+function cpTones(h){var x=rgb2hsl(hex2rgb(h)),ch=x[1]*(1-Math.abs(2*x[2]-1));if(ch<.08)x[1]=Math.min(x[1],.06);return [.16,.3,null,.72,.9].map(function(l){return l==null?rgb2hex(hex2rgb(h)):rgb2hex(hsl2rgb([x[0],x[1],l]))})}
+function cpChip(h,cur){return '<button type="button" data-c="'+h+'" title="'+h+'" style="background:'+h+'"'+(h===cur?' class="on"':'')+'></button>'}
+function cpOpen(k){
+ CP_K=k;var cur=$('th'+k).value;
+ $('cpT').textContent={P:'주색 고르기',A:'강조색 고르기',L:'밝은 배경 고르기'}[k];
+ if(TH_PAL&&TH_PAL.length){
+  $('cpH').textContent='넣은 사진에서 뽑은 색이에요. 줄마다 왼쪽은 어둡게, 오른쪽은 밝게 바꾼 색이에요.';
+  $('cpImg').innerHTML=TH_PAL.map(function(h){return cpTones(h).map(function(t){return cpChip(t,cur)}).join('')}).join('');
+ }else{$('cpH').textContent='사진을 넣으면 그 사진의 색이 여기에 나와요.';$('cpImg').innerHTML=''}
+ $('cpBase').innerHTML=CP_BASE.map(function(h){return cpChip(h,cur)}).join('');
+ $('cpHex').value=cur;$('cpop').classList.add('on');
+}
+function cpPick(h){var el=$('th'+CP_K);el.value=h;el.onchange();$('cpop').classList.remove('on')}
+document.addEventListener('click',function(e){var b=e.target.closest('[data-cp]');if(b){e.preventDefault();cpOpen(b.dataset.cp)}});
+$('cpop').addEventListener('click',function(e){
+ if(e.target===$('cpop'))return $('cpop').classList.remove('on');
+ var c=e.target.closest('.cpg button');if(c)cpPick(c.dataset.c);
+});
+$('cpOk').onclick=function(){var h=dzHex(/^#/.test($('cpHex').value.trim())?$('cpHex').value:'#'+$('cpHex').value);if(!h){toast('색상 코드는 #2b2f88처럼 넣어 주세요.');return}cpPick(h)};
+$('cpClose').onclick=function(){$('cpop').classList.remove('on')};
+$('cpNative').onclick=function(){var el=$('th'+CP_K);$('cpop').classList.remove('on');try{el.showPicker()}catch(e){el.click()}};
+// 지난번에 뽑은 색도 칩으로 보여 준다
+if(TH_PAL&&TH_PAL.length){$('thPal').innerHTML=TH_PAL.map(function(h){return '<button type="button" title="'+h+'" data-c="'+h+'" style="background:'+h+'"></button>'}).join('');$('thPalW').style.display=''}
+thSyncHex();
 </script>
 </body>
 </html>
