@@ -1573,7 +1573,7 @@ async function save(){
  $('save').disabled=true;$('shareBtn').style.display='none';
  var share=canShareFiles(),files=await renderFiles($('saving'));
  if(!share){$('saving').textContent='내려받는 중…';await downloadFiles(files)}
- lsSet(DT==='biz'?'lastIssueB':'lastIssue',String(NO));
+ lsSet(lastKey(DT,DATA.lang),String(NO));
  var rec=histRecord(DATA,DT,NO,$('date').value||today());if(DT===CT)histRefresh();
  if(share){SHARE=files;$('shareBtn').style.display='inline-block';$('saving').textContent='8장을 만들었어요. "사진에 저장/공유"를 눌러 사진 앱에 저장하거나 보내세요.'+(rec?' 발행 기록에 '+NO+'호를 남겼어요.':'')+' 인스타에 올리려면 아래 "다음"을 누르세요.';$('save').disabled=false;return}
  $('saving').textContent=(rec?NO+'호를 발행 기록에 남겼어요. ':'')+'저장 완료. 다운로드 폴더에서 '+pre+'-'+no+'-'+L+'-01.jpg ~ 08.jpg를 확인하세요. 여러 파일 저장을 묻는 창이 뜨면 허용해 주세요. 인스타에 올리려면 아래 "다음"을 누르세요.';
@@ -1966,25 +1966,33 @@ var HIST_N=1; // 프롬프트에는 바로 직전 호만 넣는다
 var HIST_SEED={sp:[{no:3,date:'',subject:'농구',summary:'NBA 유럽 리그와 구단 가치'},{no:4,date:'',subject:'배드민턴',summary:'안세영 시즌과 대회 일정'}],
  biz:[{no:1,date:'',subject:'KBO 흥행과 월드컵 스폰서 성적표',summary:'팬덤 커머스, 스폰서십 22배, 스트리밍/협업'}]};
 var HIST_OLD={sp:'농구 #3 NBA 유럽 리그와 구단 가치, 배드민턴 #4 안세영 시즌과 대회 일정',biz:'#1 KBO 흥행과 월드컵 스폰서 성적표(팬덤 커머스, 스폰서십 22배, 스트리밍/협업)'};
-function histKey(t){return t==='biz'?'hist_biz':'hist_sp'}
-function histGet(t){
- var raw=lsGet(histKey(t));
- if(raw==null){ // 처음 열 때: 예전에 손으로 쓴 지난 호 소재가 있으면 그대로 옮긴다
-  var old=lsGet(t==='biz'?'pastB':'past'),a=old&&old.trim()&&old.trim()!==HIST_OLD[t]?[{no:null,date:'',text:old.trim()}]:HIST_SEED[t].slice();
-  histPut(t,a);return a;
- }
+/* 기록은 카드 종류 x 언어(국문/영문)마다 따로, 발행 번호도 따로 매긴다 */
+function hl(l){return (l||(typeof LANG==='string'?LANG:'ko'))==='en'?'en':'ko'}
+function histKey(t,l){return 'hist_'+(t==='biz'?'biz':'sp')+'_'+hl(l)}
+function lastKey(t,l){return 'last_'+(t==='biz'?'biz':'sp')+'_'+hl(l)}
+// 예전 기록(종류별 하나)을 국문/영문으로 나눠 옮긴다
+function histMigrate(t){
+ var old=lsGet(t==='biz'?'hist_biz':'hist_sp'),ko=[],en=[];
+ if(old!=null){try{(JSON.parse(old)||[]).forEach(function(e){(e&&e.lang==='en'?en:ko).push(e)})}catch(e){}}
+ else{var past=lsGet(t==='biz'?'pastB':'past');ko=past&&past.trim()&&past.trim()!==HIST_OLD[t]?[{no:null,date:'',text:past.trim()}]:HIST_SEED[t].slice()}
+ histPut(t,ko,'ko');histPut(t,en,'en');
+ var li=lsGet(t==='biz'?'lastIssueB':'lastIssue');if(li)lsSet(lastKey(t,'ko'),li);
+}
+function histGet(t,l){
+ var raw=lsGet(histKey(t,l));
+ if(raw==null){histMigrate(t);raw=lsGet(histKey(t,l))}
  try{var a=JSON.parse(raw);return Array.isArray(a)?a:[]}catch(e){return []}
 }
-function histPut(t,a){a.sort(function(x,y){return (x.no==null?-1:x.no)-(y.no==null?-1:y.no)});lsSet(histKey(t),JSON.stringify(a))}
+function histPut(t,a,l){a.sort(function(x,y){return (x.no==null?-1:x.no)-(y.no==null?-1:y.no)});lsSet(histKey(t,l),JSON.stringify(a))}
 function histClean(s){return String(s==null?'':s).replace(/\{\{|\}\}|\*\*|\[\[|\]\]/g,'').replace(/\s+/g,' ').trim()}
 function histLine(e,t){
  if(e.text)return e.text;
  return t==='biz'?'#'+e.no+' '+e.subject+(e.summary?'('+e.summary+')':''):e.subject+' #'+e.no+(e.summary?' '+e.summary:'');
 }
-function histPast(t){return histGet(t).slice(-HIST_N).map(function(e){return histLine(e,t)}).join(', ')}
-function histNext(t){
- var m=parseInt(lsGet(t==='biz'?'lastIssueB':'lastIssue'),10)||0;
- histGet(t).forEach(function(e){if(e.no>m)m=e.no});return m+1;
+function histPast(t){return histGet(t,'ko').slice(-HIST_N).map(function(e){return histLine(e,t)}).join(', ')}
+function histNext(t,l){
+ var a=histGet(t,l),m=parseInt(lsGet(lastKey(t,l)),10)||0;
+ a.forEach(function(e){if(e.no>m)m=e.no});return m+1;
 }
 // 원고에서 이번 호 소재 뽑기: 종목은 표지의 세 줄 요약, 비즈니스는 표지 제목과 흐름 세 줄
 function histFrom(d,t,no,date){
@@ -1994,37 +2002,37 @@ function histFrom(d,t,no,date){
  e.summary=e.summary.slice(0,140);e.lang=d.lang;return e;
 }
 function histRecord(d,t,no,date){
- var a=histGet(t),e=histFrom(d,t,no,date),k=-1;
+ var l=hl(d.lang),a=histGet(t,l),e=histFrom(d,t,no,date),k=-1;
  a.forEach(function(x,i){if(x.no===no)k=i});
- if(k>=0&&a[k].lang==='ko'&&e.lang!=='ko')return false; // 영문판은 같은 호의 국문 기록을 덮지 않는다
  if(k>=0)a[k]=e;else a.push(e);
- histPut(t,a);histRender();return true;
+ histPut(t,a,l);histRender();return true;
 }
 function histRender(){
- var t=CT,a=histGet(t),box=$('histList');
+ var t=CT,l=hl(),a=histGet(t,l),box=$('histList');
  $('histN').textContent='('+a.length+'건)';
- $('histCap').textContent=(t==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스')+' 지난 호';
+ $('histCap').textContent=(t==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스')+' '+(l==='en'?'영문':'국문')+' 지난 호';
  box.innerHTML=a.length?'':'<p class="hint">아직 기록이 없어요.</p>';
  a.slice().reverse().forEach(function(e,ri){
   var i=a.length-1-ri,r=document.createElement('div');r.className='hli';
   var nm=e.text?e.text:(e.no!=null?e.no+'호 ':'')+(e.subject||'');
   r.innerHTML='<span>'+esc(nm)+(e.date?' <small>'+esc(e.date)+'</small>':'')+'</span><button class="hdel" title="이 기록 지우기">×</button>';
-  r.querySelector('.hdel').onclick=function(){var b=histGet(t);b.splice(i,1);histPut(t,b);histRefresh()};
+  r.querySelector('.hdel').onclick=function(){var b=histGet(t,l);b.splice(i,1);histPut(t,b,l);histRefresh()};
   box.appendChild(r);
  });
 }
 // 기록이 바뀌면 지난 호 소재, 다음 호 번호, 프롬프트를 다시 채운다
-function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('issue').value=histNext(CT);if(window.showP)window.showP(window.curP||'make')}
+function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('issue').value=histNext(CT,hl());if(window.showP)window.showP(window.curP||'make')}
 (function(){
  $('histT').onclick=function(){var b=$('histBox');b.style.display=b.style.display==='none'?'block':'none'};
  $('histClr').onclick=function(){
-  var nm=CT==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스';
+  var nm=(CT==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스')+' '+(hl()==='en'?'영문':'국문');
   if(!confirm(nm+'의 발행 기록을 모두 지우고 1호부터 다시 시작할까요?\n(다른 종류의 기록은 그대로예요. 지우기 전에 "기록 내보내기"로 백업해 둘 수 있어요.)'))return;
-  histPut(CT,[]);lsSet(CT==='biz'?'lastIssueB':'lastIssue','');histRefresh();
+  histPut(CT,[],hl());lsSet(lastKey(CT,hl()),'');if(hl()==='ko')lsSet(CT==='biz'?'lastIssueB':'lastIssue','');$('issue').value=1;histRefresh();
   $('histMsg').textContent=nm+' 기록을 지웠어요. 다음 호는 1호, 지난 호 소재는 "없음(첫 호)"로 들어가요.';
  };
  $('histExp').onclick=function(){
-  var o={app:'sports-cardnews',version:1,saved:today(),sp:histGet('sp'),biz:histGet('biz'),lastIssue:lsGet('lastIssue'),lastIssueB:lsGet('lastIssueB')};
+  var o={app:'sports-cardnews',version:2,saved:today(),hist:{},last:{}};
+  ['sp','biz'].forEach(function(t){['ko','en'].forEach(function(l){o.hist[t+'_'+l]=histGet(t,l);o.last[t+'_'+l]=lsGet(lastKey(t,l))})});
   var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}));a.download='cardnews-history-'+today().replace(/\./g,'')+'.json';
   document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},400);
   $('histMsg').textContent='기록 파일을 내려받았어요. 다른 컴퓨터나 휴대폰에서 "기록 가져오기"로 넣으면 같은 기록을 쓸 수 있어요.';
@@ -2033,15 +2041,18 @@ function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('iss
  $('histFile').onchange=function(){
   var f=this.files[0];this.value='';if(!f)return;
   f.text().then(function(s){
-   var o=JSON.parse(s),n=0;
-   ['sp','biz'].forEach(function(t){
-    if(!Array.isArray(o[t]))return;var a=histGet(t);
-    o[t].forEach(function(e){if(!e||typeof e!=='object')return;
+   var o=JSON.parse(s),n=0,src={};
+   if(o.hist)src=o.hist; // 새 형식
+   else ['sp','biz'].forEach(function(t){(o[t]||[]).forEach(function(e){var k=t+'_'+(e&&e.lang==='en'?'en':'ko');(src[k]=src[k]||[]).push(e)})}); // 예전 형식
+   Object.keys(src).forEach(function(key){
+    var t=key.split('_')[0],l=key.split('_')[1];if(!Array.isArray(src[key]))return;var a=histGet(t,l);
+    src[key].forEach(function(e){if(!e||typeof e!=='object')return;
      var k=-1;a.forEach(function(x,i){if(e.no!=null?x.no===e.no:(x.text&&x.text===e.text))k=i});
      if(k>=0)a[k]=e;else a.push(e);n++});
-    histPut(t,a);
+    histPut(t,a,l);
    });
-   ['lastIssue','lastIssueB'].forEach(function(k){var v=parseInt(o[k],10),c=parseInt(lsGet(k),10)||0;if(v>c)lsSet(k,String(v))});
+   var last=o.last||{sp_ko:o.lastIssue,biz_ko:o.lastIssueB};
+   Object.keys(last).forEach(function(key){var t=key.split('_')[0],l=key.split('_')[1],v=parseInt(last[key],10),c=parseInt(lsGet(lastKey(t,l)),10)||0;if(v>c)lsSet(lastKey(t,l),String(v))});
    histRefresh();$('histMsg').textContent='기록 '+n+'건을 가져왔어요. 같은 호 번호는 가져온 내용으로 바꿨어요.';
   }).catch(function(){$('histMsg').textContent='기록 파일을 읽지 못했어요. "기록 내보내기"로 만든 파일인지 확인해 주세요.'});
  };
@@ -2053,7 +2064,7 @@ function setType(k){
  $('lblSubj').textContent=k==='biz'?'주제(비우면 제미나이가 고름)':'종목';
  $('sport').placeholder=k==='biz'?'예: 스폰서십':'예: 야구';
  $('sport').style.width=k==='biz'?'260px':'190px';
- $('issue').value=histNext(k);
+ $('issue').value=histNext(k,hl());
  $('past').value=histPast(k);histRender();
  if(window.showP)window.showP(window.curP||'make');
 }
@@ -2275,20 +2286,26 @@ function nextLabel(){
  setLang('ko',{save:false});
 })();
 function issueInfo(){
- var a=histGet(CT),last=a[a.length-1];
- $('issueInfo').textContent='이번 호는 '+($('issue').value||'?')+'호예요. 지난 호: '+(last?histLine(last,CT):'없음(첫 호)')+'. 호 번호와 발행일을 바꾸면 미리보기에 바로 반영돼요.';
+ var l=hl(),a=histGet(CT,l),last=a[a.length-1],nm=l==='en'?'영문':'국문';
+ $('issueInfo').textContent='이번 호는 '+nm+' '+($('issue').value||'?')+'호예요(국문과 영문은 번호를 따로 매겨요). 지난 '+nm+' 호: '+(last?histLine(last,CT):'없음(첫 호)')+'. 호 번호와 발행일을 바꾸면 미리보기에 바로 반영돼요.';
 }
 /* ===== 작업 상태 기억: 새로고침하거나 앱을 다시 열어도 하던 단계 그대로 이어서 ===== */
-var ST_READY=false,P_EDITED=false;
+var ST_READY=false,P_EDITED=false,ISS={};
+// 지금 종류와 언어의 호 번호: 쓰던 번호가 있고 아직 발행 전이면 그 번호, 아니면 다음 호
+function issueFor(){
+ var v=ISS[CT+'_'+hl()],pub=v&&histGet(CT,hl()).some(function(e){return String(e.no)===String(v)});
+ $('issue').value=v&&!pub?v:histNext(CT,hl());
+}
 function stSave(){
  if(!ST_READY)return;
- lsSet('state',JSON.stringify({ct:CT,sport:$('sport').value,lang:LANG,step:CUR_ST,issue:$('issue').value,date:$('date').value,
+ lsSet('state',JSON.stringify({ct:CT,sport:$('sport').value,lang:LANG,step:CUR_ST,iss:ISS,date:$('date').value,
   prompt:P_EDITED?$('prompt').value:'',pEdited:P_EDITED,ig:$('igCap').value,igFor:$('igCap').dataset.for||''}));
 }
 (function(){
  // 단계 이동과 국문/영문 전환도 기억한다
  var g0=goStep;goStep=function(st){g0(st);stSave()};
- var l0=setLang;setLang=function(l,o){l0(l,o);stSave()};
+ var l0=setLang;setLang=function(l,o){l0(l,o);if(ST_READY){issueFor();histRender()}stSave()};
+ $('issue').addEventListener('change',function(){ISS[CT+'_'+hl()]=$('issue').value});
  // 프롬프트를 직접 고쳤을 때만 고친 글을 기억하고, 종목/지난 호/종류를 바꿔 새로 만들어지면 잊는다
  $('prompt').addEventListener('input',function(){P_EDITED=true});
  ['sport','past','ctype'].forEach(function(id){$(id).addEventListener(id==='ctype'?'change':'input',function(){P_EDITED=false})});
@@ -2304,11 +2321,11 @@ function stSave(){
   if(s.pEdited&&s.prompt){$('prompt').value=s.prompt;P_EDITED=true}
   if(s.lang&&s.lang!==LANG)setLang(s.lang,{save:false});
   // 이미 발행(저장)한 호면 다음 호 번호와 오늘 날짜로 새로 시작
-  var pub=histGet(CT).some(function(e){return String(e.no)===String(s.issue)});
-  if(s.issue&&!pub){$('issue').value=s.issue;if(s.date)$('date').value=s.date}
+  ISS=s.iss||{};var v=ISS[CT+'_'+hl()];
+  if(v&&!histGet(CT,hl()).some(function(e){return String(e.no)===String(v)})&&s.date)$('date').value=s.date;
   if(s.ig){$('igCap').value=s.ig;$('igCap').dataset.for=s.igFor}
  }
- ST_READY=true;
+ ST_READY=true;issueFor();histRender();
  if($('json').value.trim()){try{await make()}catch(e){}}
  if(s&&s.step&&s.step!==CUR_ST)goStep(s.step);
  stSave();
