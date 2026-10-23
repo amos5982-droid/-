@@ -1,5 +1,5 @@
 /* 오프라인에서도 열리도록 앱 파일을 저장해 두고, 인터넷이 되면 새 버전으로 바꿔 둔다 */
-var CACHE = 'cardnews-v2';
+var CACHE = 'cardnews-v3';
 var FILES = ['./', './card-news-maker.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', function (e) {
