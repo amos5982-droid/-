@@ -836,11 +836,12 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="hint" id="thHint"></p>
     <details class="dzb">
       <summary>레이아웃과 꾸밈까지 이미지처럼 바꾸기(제미나이)</summary>
-      <p class="d" style="margin-top:8px">버튼을 눌러 제미나이를 열고 같은 이미지를 첨부해 보내요. 받은 디자인 JSON을 아래 칸에 붙여 넣고 "디자인 적용"을 누르면 배경 순서, 모서리, 카드와 꼬리표 모양, 제목 스타일, 배경 무늬, 꾸밈 도형이 바뀌어요.</p>
+      <p class="d" style="margin-top:8px">버튼을 눌러 제미나이를 열고 같은 이미지를 첨부해 보내요. 받은 디자인 JSON을 아래 칸에 붙여 넣고 "디자인 적용"을 누르면 배경 순서, 모서리, 카드와 꼬리표 모양, 제목 스타일, 꾸밈 도형(배경 무늬는 아래 칸을 켰을 때만)이 바뀌어요.</p>
       <div class="row" style="margin-top:0"><button class="btn pri" id="dzCopyG">디자인 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="dzCopy">복사만</button><span id="dzCopied" class="hint"></span></div>
       <textarea id="dzPrompt" readonly style="display:none;height:160px;margin-top:10px"></textarea>
       <textarea id="dzJson" style="height:150px;margin-top:10px" placeholder='{ "design": { ... } }'></textarea>
       <div class="row"><button class="btn pri" data-paste="dzJson" data-then="dzGo">붙여넣기(바로 적용)</button><button class="btn" data-clear="dzJson">지우기</button><button class="btn" id="dzGo">디자인 적용</button><button class="btn" id="dzEx">예시 디자인 불러오기</button><button class="btn" id="dzOff">디자인 해제</button></div>
+      <div class="row"><label title="켜면 제미나이 디자인 JSON의 배경 무늬(점, 격자, 줄, 빗금 등)를 카드 배경에 깔아요."><input type="checkbox" id="dzPat"> 배경 무늬도 따라 하기(점, 격자, 빗금 등)</label></div>
       <p class="hint" id="dzMsg"></p>
     </details>
   </div>
@@ -1916,7 +1917,8 @@ function dzBzTheme(i){return DZ&&DZ.slides[i]?{light:'light',dark:'dark',accent:
 function dzWrap(h,i){
  if(!DZ)return h;
  var m=/<section class="[^"]*?\b(gy|dark|yw|light|yel)\b/.exec(h),t=dzTh(m?m[1]:'gy'),z=DZ,ly='';
- if(z.pattern!=='none'&&z.pslides.indexOf(i)>=0)ly+=dzPattern(z,i,t);
+ // 배경 무늬는 "배경 무늬도 따라 하기"를 켰을 때만 깐다(글자 뒤가 지저분해지지 않게 기본은 끔)
+ if(z.pattern!=='none'&&dzPatOn()&&z.pslides.indexOf(i)>=0)ly+=dzPattern(z,i,t);
  z.decos.forEach(function(x){if(x.slides.indexOf(i)>=0)ly+=dzDeco(x,t)});
  var cls='dz'+(z.align==='center'?' al-c':'')+(z.keep?'':' nodef');
  if(ly)ly='<svg class="dzs" aria-hidden="true" width="1080" height="1350" viewBox="0 0 1080 1350">'+ly+'</svg>';
@@ -1958,6 +1960,9 @@ function cssRefresh(){
  el.textContent=t;
 }
 var DZ_LB={shape:{round:'둥근 모서리',soft:'살짝 둥근 모서리',sharp:'각진 모서리'},card:{filled:'채운 카드',outline:'테두리 카드',shadow:'그림자 카드',offset:'어긋난 그림자 카드',plain:'선만 있는 카드'},pattern:{none:'',dots:'점 무늬',grid:'격자 무늬',lines:'줄 무늬',diagonal:'사선 무늬',halftone:'망점 무늬',gradient:'빛 번짐 배경',frame:'테두리 틀'},bg:{light:'밝은',dark:'진한',accent:'강조'}};
+function dzPatOn(){return lsGet('dzPat')==='1'}
+// 받침에 맞춰 은/는, 을/를을 붙인다
+function josa(w,a,b){var c=String(w).charCodeAt(String(w).length-1);return w+(c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28?a:b)}
 function dzApply(z,quiet){
  DZ=z;
  var lock=$('thLock').checked;
@@ -1967,7 +1972,7 @@ function dzApply(z,quiet){
   if(!z){$('dzMsg').textContent='디자인을 해제했어요. 원래 배치와 꾸밈으로 돌아갔어요.'}
   else{
    var ls=[DZ_LB.shape[z.shape],DZ_LB.card[z.card],z.align==='center'?'제목 가운데 정렬':'제목 왼쪽 정렬'];
-   if(z.pattern!=='none')ls.push(DZ_LB.pattern[z.pattern]);
+   if(z.pattern!=='none')ls.push(dzPatOn()?DZ_LB.pattern[z.pattern]:josa(DZ_LB.pattern[z.pattern],'은','는')+' 뺌("배경 무늬도 따라 하기"를 켜면 들어가요)');
    if(z.slides.some(Boolean))ls.push('배경 순서 '+z.slides.map(function(s,i){return (i+1)+'장 '+(DZ_LB.bg[s]||'기본')}).join(', '));
    if(z.decos.length)ls.push('꾸밈 도형 '+z.decos.length+'개');
    if(lock)ls.push('색은 내 색 고정이 켜져 있어 그대로 둠');else if(z.p)ls.push('주색 '+TH.p+', 강조색 '+TH.a);
@@ -1992,7 +1997,7 @@ function dzApply(z,quiet){
  '  "kicker": "pill | box | outline | line",',
  '  "bridge": "pill | box | outline | line",',
  '  "header": "plain | line",',
- '  "background": {"pattern": "none | dots | grid | lines | diagonal | halftone | gradient | frame", "opacity": 0.1, "slides": "all"},',
+ '  "background": {"pattern": "none", "opacity": 0.05, "slides": "all"},',
  '  "decos": [',
  '   {"shape": "circle", "pos": "tr", "size": "xl", "color": "accent", "opacity": 0.9, "rotate": 0, "bleed": 0.35, "slides": "cover"}',
  '  ],',
@@ -2010,7 +2015,7 @@ function dzApply(z,quiet){
  '- kicker: 제목 위 작은 꼬리표 모양. pill(알약), box(사각), outline(테두리), line(왼쪽 막대).',
  '- bridge: 카드 아래 다음 장으로 넘기는 띠 모양. pill, box, outline, line(위쪽 선만).',
  '- header: 맨 위 로고 줄. plain 또는 line(아래 구분선).',
- '- background.pattern: 배경 전체 무늬. 글자 뒤에 깔리므로 아주 옅게만 쓴다. opacity 상한: lines/diagonal 0.05, grid 0.07, dots/halftone 0.08, gradient/frame 0.3(넘기면 자동으로 낮춘다). 이미지에 무늬가 눈에 띄게 많아도 카드에서는 옅게 쓰거나 none으로 둔다. slides는 all, cover, inner(2~8장), odd, even 또는 [1,3,5] 같은 장 번호 목록.',
+ '- background.pattern: 배경 전체 무늬. 기본은 none이다. 이미지의 배경 전체에 점, 격자, 줄, 빗금 같은 무늬가 뚜렷하게 깔려 있을 때만 dots, grid, lines, diagonal, halftone, gradient, frame 중 하나를 고르고, 아니면 반드시 none으로 둔다. 글자 뒤에 깔리므로 아주 옅게만 쓴다. opacity 상한: lines/diagonal 0.05, grid 0.07, dots/halftone 0.08, gradient/frame 0.3(넘기면 자동으로 낮춘다). 이미지에 무늬가 눈에 띄게 많아도 카드에서는 옅게 쓰거나 none으로 둔다. slides는 all, cover, inner(2~8장), odd, even 또는 [1,3,5] 같은 장 번호 목록.',
  '- decos: 이미지에 보이는 꾸밈 도형을 가장 비슷한 shape로 골라 최대 6개. 모든 장식은 글자 뒤에 깔린다.',
  '  - shape: circle, ring, half(반원), quarter(사분원), square, triangle, diamond, star, burst(빛살), plus, cross, zigzag, wave, stripes(줄무늬 사각), dots(점 격자), arcs(겹 반원), blob(유기적 덩어리), slash(굵은 사선), halftone(망점), ball(공)',
  '  - pos: tl, t, tr, l, c, r, bl, b, br(위/아래와 왼쪽/오른쪽 조합). size: s, m, l, xl 또는 40~1000 숫자(px). color: primary, accent, fg(글자색), line(옅은 글자색), white.',
@@ -2019,7 +2024,7 @@ function dzApply(z,quiet){
  '  - 정해진 shape로 표현이 안 되는 특별한 모양만 "shape" 대신 "svg"에 직접 그린 SVG를 넣어. path, circle, rect, line, polygon, polyline, ellipse, g만 쓰고 요소 60개 이하, 색은 currentColor.',
  '- keep_default_decos: 원래 카드에 있던 기본 장식(빛살, 반원)을 남길지. 이미지 느낌과 다르면 false.',
  '- 정해진 값 외의 다른 값이나 다른 항목은 쓰지 마.'].join('\n');
- var EX={design:{summary:'굵은 사선과 격자, 각진 상자를 쓴 스트리트 포스터 느낌',palette:{primary:'#111827',accent:'#ff4d2e',light:'#f4f1ea'},slides:['dark','light','light','accent','light','dark','light','dark'],shape:'sharp',card:'offset',title:{align:'left',deco:'bar',weight:'black'},kicker:'box',bridge:'box',header:'line',background:{pattern:'grid',opacity:.08,slides:'all'},decos:[{shape:'slash',pos:'tr',size:'xl',color:'accent',opacity:1,bleed:.45,slides:'cover'},{shape:'halftone',pos:'bl',size:'l',color:'fg',opacity:.25,bleed:.3,slides:'cover'},{shape:'triangle',pos:'br',size:'s',color:'accent',rotate:15,slides:[2,4,6]}],keep_default_decos:false}};
+ var EX={design:{summary:'굵은 사선과 각진 상자를 쓴 스트리트 포스터 느낌',palette:{primary:'#111827',accent:'#ff4d2e',light:'#f4f1ea'},slides:['dark','light','light','accent','light','dark','light','dark'],shape:'sharp',card:'offset',title:{align:'left',deco:'bar',weight:'black'},kicker:'box',bridge:'box',header:'line',background:{pattern:'none',slides:'all'},decos:[{shape:'slash',pos:'tr',size:'xl',color:'accent',opacity:1,bleed:.45,slides:'cover'},{shape:'halftone',pos:'bl',size:'l',color:'fg',opacity:.25,bleed:.3,slides:'cover'},{shape:'triangle',pos:'br',size:'s',color:'accent',rotate:15,slides:[2,4,6]}],keep_default_decos:false}};
  $('dzCopy').onclick=function(){var ta=$('dzPrompt');ta.value=PROMPTS.design;ta.style.display='block';ta.focus();ta.select();var ok=false;try{ok=document.execCommand('copy')}catch(e){}
   if(!ok&&navigator.clipboard)navigator.clipboard.writeText(ta.value);$('dzCopied').textContent='복사했어요. 제미나이에 붙여 넣고 같은 이미지를 첨부하세요.';setTimeout(function(){$('dzCopied').textContent=''},5000)};
  $('dzGo').onclick=function(){
@@ -2029,6 +2034,9 @@ function dzApply(z,quiet){
  };
  $('dzEx').onclick=function(){$('dzJson').value=JSON.stringify(EX,null,1);$('dzGo').onclick()};
  $('dzOff').onclick=function(){lsSet('design','');dzApply(null)};
+ $('dzPat').checked=dzPatOn();
+ $('dzPat').onchange=function(){lsSet('dzPat',this.checked?'1':'');if(DZ){cssRefresh();if(DATA)make()}
+  $('dzMsg').textContent=this.checked?(DZ&&DZ.pattern!=='none'?josa(DZ_LB.pattern[DZ.pattern],'을','를')+' 배경에 깔았어요.':'디자인에 배경 무늬가 있으면 깔아요.'):'배경 무늬를 뺐어요.'};
  var sv=lsGet('design');
  if(sv){try{var z=dzNorm(parseJson(sv).d);if(z){$('dzJson').value=sv;DZ=z;cssRefresh();$('dzMsg').textContent='지난번에 쓴 디자인을 불러왔어요. 해제하려면 "디자인 해제"를 누르세요.'}}catch(e){}}
 })();
