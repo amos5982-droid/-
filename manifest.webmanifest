@@ -1,7 +1,7 @@
 {
-  "name": "스포츠 카드뉴스 제작기",
+  "name": "경제 카드뉴스 제작기",
   "short_name": "카드뉴스",
-  "description": "제미나이 원고로 스포츠 카드뉴스 8장을 만들고 JPG로 저장하는 도구",
+  "description": "제미나이 원고로 경제 카드뉴스 8장을 만들고 JPG로 저장하는 도구",
   "lang": "ko",
   "start_url": "./card-news-maker.html",
   "scope": "./",
