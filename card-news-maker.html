@@ -1571,17 +1571,20 @@ async function save(){
  if(!DATA)return;
  var L=DATA.lang,no=String(NO).padStart(2,'0'),pre=DT==='biz'?'biz':'brief';
  $('save').disabled=true;$('shareBtn').style.display='none';
- var share=canShareFiles(),files=await renderFiles($('saving'));
+ var share=canShareFiles()&&isIOS(),files=await renderFiles($('saving'));
  if(!share){$('saving').textContent='내려받는 중…';await downloadFiles(files)}
  lsSet(lastKey(DT,DATA.lang),String(NO));
  var rec=histRecord(DATA,DT,NO,$('date').value||today());if(DT===CT)histRefresh();
- if(share){SHARE=files;$('shareBtn').style.display='inline-block';$('saving').textContent='8장을 만들었어요. "사진에 저장/공유"를 눌러 사진 앱에 저장하거나 보내세요.'+(rec?' 발행 기록에 '+NO+'호를 남겼어요.':'')+' 인스타에 올리려면 아래 "다음"을 누르세요.';$('save').disabled=false;return}
- $('saving').textContent=(rec?NO+'호를 발행 기록에 남겼어요. ':'')+'저장 완료. 다운로드 폴더에서 '+pre+'-'+no+'-'+L+'-01.jpg ~ 08.jpg를 확인하세요. 여러 파일 저장을 묻는 창이 뜨면 허용해 주세요. 인스타에 올리려면 아래 "다음"을 누르세요.';
+ if(share){SHARE=files;$('shareBtn').style.display='inline-block';$('saving').textContent='8장을 만들었어요. "사진에 저장/공유"를 누르고, 공유 창에서 "이미지 8개 저장"을 고르면 사진 앱에 들어가요.'+(rec?' 발행 기록에 '+NO+'호를 남겼어요.':'')+' 인스타에 올리려면 아래 "다음"을 누르세요.';$('save').disabled=false;return}
+ $('saving').textContent=(rec?NO+'호를 발행 기록에 남겼어요. ':'')+(isTouch()?'저장 완료. 갤러리 앱의 "다운로드(Download)" 앨범에 8장이 들어가요. 여러 파일 내려받기를 묻는 창이 뜨면 허용해 주세요.':'저장 완료. 다운로드 폴더에서 '+pre+'-'+no+'-'+L+'-01.jpg ~ 08.jpg를 확인하세요. 여러 파일 저장을 묻는 창이 뜨면 허용해 주세요.')+' 인스타에 올리려면 아래 "다음"을 누르세요.';
  $('save').disabled=false;
 }
 
 // 휴대폰에서는 여러 파일 내려받기가 막히는 경우가 많아 공유 창으로 한 번에 넘긴다
 var SHARE=null;
+// 아이폰/아이패드는 내려받으면 '파일' 앱으로 가서, 사진 앱에 넣으려면 공유 창의 "이미지 저장"을 써야 한다
+function isIOS(){return /iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function isTouch(){return !!(window.matchMedia&&matchMedia('(hover: none)').matches)}
 function canShareFiles(){try{return !!(navigator.canShare&&window.matchMedia&&matchMedia('(hover: none)').matches&&navigator.canShare({files:[new File([new Blob(['x'],{type:'image/jpeg'})],'t.jpg',{type:'image/jpeg'})]}))}catch(e){return false}}
 function shareNow(){
  if(!SHARE)return;
