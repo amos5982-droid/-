@@ -58,6 +58,8 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .drop.ov{border-color:#ffc53d;color:#e8e9f0}
 .dzb{border-top:1px solid #2a2d3d;margin-top:18px;padding-top:16px}
 .dzb h3{font-size:16px;margin:0 0 4px;font-weight:800}
+.row input.hex{width:92px;padding:7px 8px;font:13px ui-monospace,Menlo,Consolas,monospace;text-transform:lowercase}
+.row input.hex.bad{border-color:#ff7a90}
 #thImg{height:96px;max-width:200px;object-fit:contain;border-radius:8px;background:#0e0f14}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chips button{width:34px;height:34px;border-radius:8px;border:2px solid #3a3e55;cursor:pointer;padding:0}
@@ -666,9 +668,9 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <div class="row" id="thRow">
       <img id="thImg" alt="참고 이미지" style="display:none">
       <div id="thPalW" style="display:none"><div class="chips" id="thPal"></div><p class="hint" style="margin:6px 0 0">뽑은 색: 누르면 주색, Shift+클릭하면 강조색</p></div>
-      <label>주색 <input type="color" id="thP"></label>
-      <label>강조색 <input type="color" id="thA"></label>
-      <label>밝은 배경 <input type="color" id="thL"></label>
+      <label>주색 <input type="color" id="thP"><input type="text" class="hex" id="thPx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
+      <label>강조색 <input type="color" id="thA"><input type="text" class="hex" id="thAx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
+      <label>밝은 배경 <input type="color" id="thL"><input type="text" class="hex" id="thLx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
       <button class="btn" id="thSwap">주색↔강조색</button>
       <button class="btn" id="thReset">원래 색으로</button>
       <label title="켜 두면 제미나이 디자인 JSON에 들어 있는 색은 쓰지 않고, 여기서 고른 색을 유지해요."><input type="checkbox" id="thLock"> 내 색 고정(디자인 적용 때 색은 안 바꿈)</label>
@@ -1494,7 +1496,7 @@ function thFix(p,a){
  return {p:rgb2hex(hsl2rgb(P)),a:rgb2hex(hsl2rgb(A)),changed:ch};
 }
 function thApply(p,a,quiet,noMake){
- if(!p){TH.on=false;TH.p=TH.a=null;cssRefresh();thSave();$('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1}
+ if(!p){TH.on=false;TH.p=TH.a=null;cssRefresh();$('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1;thSave()}
  else{
   var fx=thFix(p,a);TH.on=true;TH.p=fx.p;TH.a=fx.a;
   TH.map={p:{b:rgb2hsl(hex2rgb(TH_BASE.p)),n:rgb2hsl(hex2rgb(fx.p))},a1:{b:rgb2hsl(hex2rgb(TH_BASE.a1)),n:rgb2hsl(hex2rgb(fx.a))},a2:{b:rgb2hsl(hex2rgb(TH_BASE.a2)),n:rgb2hsl(hex2rgb(fx.a))}};
@@ -1504,7 +1506,9 @@ function thApply(p,a,quiet,noMake){
  }
  if(DATA&&!noMake)make();
 }
-function thSave(){lsSet('theme',TH.p||TH.light?JSON.stringify({p:TH.p,a:TH.a,l:TH.light}):'')}
+// 색 고르기 칸의 값을 옆 색상 코드 칸에도 보여 준다
+function thSyncHex(){['P','A','L'].forEach(function(k){var x=$('th'+k+'x');x.value=$('th'+k).value;x.classList.remove('bad')})}
+function thSave(){thSyncHex();lsSet('theme',TH.p||TH.light?JSON.stringify({p:TH.p,a:TH.a,l:TH.light}):'')}
 // 밝은 배경은 글자가 잘 보이도록 아주 밝게만 쓴다
 function thLight(h){if(!h)return null;var x=rgb2hsl(hex2rgb(h));if(x[2]<.9)x[2]=.93;return rgb2hex(hsl2rgb(x))}
 function thSetLight(h,noMake){TH.light=thLight(h);$('thL').value=TH.light||'#f2f3f6';cssRefresh();thSave();if(DATA&&!noMake)make()}
@@ -1551,10 +1555,18 @@ function thLoad(file){
  $('thP').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thA').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thSwap').onclick=function(){if(TH.on)thApply(TH.a,TH.p)};
+ ['P','A','L'].forEach(function(k){
+  var x=$('th'+k+'x');
+  function go(){var h=dzHex(/^#/.test(x.value.trim())?x.value:'#'+x.value);if(!h){x.classList.add('bad');$('thHint').textContent='색상 코드는 #2b2f88이나 #fc0처럼 # 뒤에 16진수 6자리(또는 3자리)로 넣어 주세요.';return}
+   if(h===$('th'+k).value){x.value=h;x.classList.remove('bad');return}
+   $('th'+k).value=h;$('th'+k).onchange()}
+  x.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();go()}});
+  x.addEventListener('change',go);
+ });
  $('thL').onchange=function(){thSetLight($('thL').value);$('thHint').textContent='밝은 배경을 '+TH.light+'로 바꿨어요.'};
  $('thLock').onchange=function(){lsSet('thLock',this.checked?'1':'')};$('thLock').checked=!!lsGet('thLock');
  $('thReset').onclick=function(){TH.light=null;$('thL').value='#f2f3f6';thApply(null);$('thPalW').style.display='none';$('thPal').innerHTML='';$('thImg').removeAttribute('src');$('thImg').style.display='none';$('thHint').textContent='원래 색으로 돌렸어요.'};
- $('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1;$('thL').value='#f2f3f6';
+ $('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1;$('thL').value='#f2f3f6';thSyncHex();
  var sv;try{sv=JSON.parse(lsGet('theme')||'null')}catch(e){}
  if(sv){if(sv.l)thSetLight(sv.l,true);if(sv.p)thApply(sv.p,sv.a,true);$('thHint').textContent='지난번에 쓴 색을 불러왔어요. 원래 색으로 돌리려면 "원래 색으로"를 누르세요.'}
 })();
