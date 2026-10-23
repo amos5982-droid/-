@@ -661,15 +661,17 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 
   <div class="step">
     <h2><i>0</i>디자인 참고 이미지 넣기(선택)</h2>
-    <p class="d">마음에 드는 카드뉴스, 포스터, 구단 엠블럼 같은 이미지를 넣으면 그 색 조합을 뽑아 카드에 자동으로 입혀요. 주색(배경, 제목, 로고)과 강조색(포인트, 하이라이트)이 바뀌어요. 레이아웃과 꾸밈까지 따라 하려면 아래 제미나이 단계를 이어서 하세요. 이미지는 이 컴퓨터 밖으로 나가지 않아요.</p>
+    <p class="d">마음에 드는 카드뉴스, 포스터, 구단 엠블럼 같은 이미지를 넣으면 그 색 조합을 뽑아 카드에 자동으로 입혀요. 주색(배경, 제목, 로고)과 강조색(포인트, 하이라이트)이 바뀌어요. 이미지 없이 아래 칸에서 색을 직접 골라도 돼요. 레이아웃과 꾸밈까지 따라 하려면 아래 제미나이 단계를 이어서 하세요. 이미지는 이 컴퓨터 밖으로 나가지 않아요.</p>
     <div class="drop" id="thDrop">이미지를 여기로 끌어다 놓거나 <b>클릭해서 고르세요</b>. 복사한 이미지는 Ctrl+V로 붙여 넣어도 돼요.<input type="file" id="thFile" accept="image/*" hidden></div>
-    <div class="row" id="thRow" style="display:none">
-      <img id="thImg" alt="참고 이미지">
-      <div><div class="chips" id="thPal"></div><p class="hint" style="margin:6px 0 0">뽑은 색: 누르면 주색, Shift+클릭하면 강조색</p></div>
+    <div class="row" id="thRow">
+      <img id="thImg" alt="참고 이미지" style="display:none">
+      <div id="thPalW" style="display:none"><div class="chips" id="thPal"></div><p class="hint" style="margin:6px 0 0">뽑은 색: 누르면 주색, Shift+클릭하면 강조색</p></div>
       <label>주색 <input type="color" id="thP"></label>
       <label>강조색 <input type="color" id="thA"></label>
+      <label>밝은 배경 <input type="color" id="thL"></label>
       <button class="btn" id="thSwap">주색↔강조색</button>
       <button class="btn" id="thReset">원래 색으로</button>
+      <label title="켜 두면 제미나이 디자인 JSON에 들어 있는 색은 쓰지 않고, 여기서 고른 색을 유지해요."><input type="checkbox" id="thLock"> 내 색 고정(디자인 적용 때 색은 안 바꿈)</label>
     </div>
     <p class="hint" id="thHint"></p>
     <div class="dzb">
@@ -1492,17 +1494,20 @@ function thFix(p,a){
  return {p:rgb2hex(hsl2rgb(P)),a:rgb2hex(hsl2rgb(A)),changed:ch};
 }
 function thApply(p,a,quiet,noMake){
- if(!p){TH.on=false;TH.p=TH.a=null;cssRefresh();lsSet('theme','')}
+ if(!p){TH.on=false;TH.p=TH.a=null;cssRefresh();thSave();$('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1}
  else{
   var fx=thFix(p,a);TH.on=true;TH.p=fx.p;TH.a=fx.a;
   TH.map={p:{b:rgb2hsl(hex2rgb(TH_BASE.p)),n:rgb2hsl(hex2rgb(fx.p))},a1:{b:rgb2hsl(hex2rgb(TH_BASE.a1)),n:rgb2hsl(hex2rgb(fx.a))},a2:{b:rgb2hsl(hex2rgb(TH_BASE.a2)),n:rgb2hsl(hex2rgb(fx.a))}};
   cssRefresh();
-  $('thP').value=fx.p;$('thA').value=fx.a;$('thRow').style.display='flex';
-  lsSet('theme',JSON.stringify({p:fx.p,a:fx.a}));
+  $('thP').value=fx.p;$('thA').value=fx.a;thSave();
   if(!quiet)$('thHint').textContent='주색 '+fx.p+', 강조색 '+fx.a+'을 카드에 입혔어요.'+(fx.changed?' 글자가 잘 보이도록 밝기를 조금 조정했어요.':'');
  }
  if(DATA&&!noMake)make();
 }
+function thSave(){lsSet('theme',TH.p||TH.light?JSON.stringify({p:TH.p,a:TH.a,l:TH.light}):'')}
+// 밝은 배경은 글자가 잘 보이도록 아주 밝게만 쓴다
+function thLight(h){if(!h)return null;var x=rgb2hsl(hex2rgb(h));if(x[2]<.9)x[2]=.93;return rgb2hex(hsl2rgb(x))}
+function thSetLight(h,noMake){TH.light=thLight(h);$('thL').value=TH.light||'#f2f3f6';cssRefresh();thSave();if(DATA&&!noMake)make()}
 // 이미지 색 뽑기: 작게 줄여 비슷한 색끼리 묶고, 많이 쓰였으면서 진한 색을 주색, 주색과 색상이 다른 선명한 색을 강조색으로 고른다
 function thExtract(img){
  var k=Math.min(1,160/Math.max(img.naturalWidth,img.naturalHeight)),cv=document.createElement('canvas');
@@ -1527,7 +1532,7 @@ function thLoad(file){
  var url=URL.createObjectURL(file),img=new Image();
  img.onload=function(){
   var r=thExtract(img);if(!r){$('thHint').textContent='색을 뽑지 못했어요. 투명하지 않은 이미지를 넣어 주세요.';return}
-  $('thImg').src=url;$('thImg').style.display='';
+  $('thImg').src=url;$('thImg').style.display='';$('thPalW').style.display='';
   $('thPal').innerHTML=r.pal.map(function(h){return '<button type="button" title="'+h+'" data-c="'+h+'" style="background:'+h+'"></button>'}).join('');
   thApply(r.p,r.a);
  };
@@ -1546,9 +1551,12 @@ function thLoad(file){
  $('thP').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thA').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thSwap').onclick=function(){if(TH.on)thApply(TH.a,TH.p)};
- $('thReset').onclick=function(){thApply(null);$('thRow').style.display='none';$('thPal').innerHTML='';$('thImg').removeAttribute('src');$('thHint').textContent='원래 색으로 돌렸어요.'};
+ $('thL').onchange=function(){thSetLight($('thL').value);$('thHint').textContent='밝은 배경을 '+TH.light+'로 바꿨어요.'};
+ $('thLock').onchange=function(){lsSet('thLock',this.checked?'1':'')};$('thLock').checked=!!lsGet('thLock');
+ $('thReset').onclick=function(){TH.light=null;$('thL').value='#f2f3f6';thApply(null);$('thPalW').style.display='none';$('thPal').innerHTML='';$('thImg').removeAttribute('src');$('thImg').style.display='none';$('thHint').textContent='원래 색으로 돌렸어요.'};
+ $('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1;$('thL').value='#f2f3f6';
  var sv;try{sv=JSON.parse(lsGet('theme')||'null')}catch(e){}
- if(sv&&sv.p){thApply(sv.p,sv.a,true);$('thImg').style.display='none';$('thHint').textContent='지난번에 쓴 색(주색 '+TH.p+', 강조색 '+TH.a+')을 불러왔어요. 원래 색으로 돌리려면 "원래 색으로"를 누르세요.'}
+ if(sv){if(sv.l)thSetLight(sv.l,true);if(sv.p)thApply(sv.p,sv.a,true);$('thHint').textContent='지난번에 쓴 색을 불러왔어요. 원래 색으로 돌리려면 "원래 색으로"를 누르세요.'}
 })();
 
 /* ===== 디자인 따라 하기: 제미나이가 이미지를 보고 준 디자인 JSON으로 배경 순서, 모양, 패턴, 꾸밈 도형을 바꾼다 ===== */
@@ -1698,13 +1706,14 @@ function dzCss(z){
 function cssRefresh(){
  var el=$('cardCss');if(TH.css==null)TH.css=el.textContent;
  var t=TH.css+(DZ?dzCss(DZ):'');t=TH.on?thRemap(t):t;
- if(DZ&&DZ.light)t+='\n.sl.dz.gy{background:'+DZ.light+'}.bz.dz.light{--bg:'+DZ.light+';background:'+DZ.light+'}';
+ if(TH.light)t+='\n.sl.gy{background:'+TH.light+'}.bz.light{--bg:'+TH.light+';background:'+TH.light+'}';
  el.textContent=t;
 }
 var DZ_LB={shape:{round:'둥근 모서리',soft:'살짝 둥근 모서리',sharp:'각진 모서리'},card:{filled:'채운 카드',outline:'테두리 카드',shadow:'그림자 카드',offset:'어긋난 그림자 카드',plain:'선만 있는 카드'},pattern:{none:'',dots:'점 무늬',grid:'격자 무늬',lines:'줄 무늬',diagonal:'사선 무늬',halftone:'망점 무늬',gradient:'빛 번짐 배경',frame:'테두리 틀'},bg:{light:'밝은',dark:'진한',accent:'강조'}};
 function dzApply(z,quiet){
  DZ=z;
- if(z&&z.p)thApply(z.p,z.a||TH.a||'#ffc53d',true,true);
+ var lock=$('thLock').checked;
+ if(z&&!lock){if(z.light)thSetLight(z.light,true);if(z.p)thApply(z.p,z.a||TH.a||'#ffc53d',true,true)}
  cssRefresh();
  if(!quiet){
   if(!z){$('dzMsg').textContent='디자인을 해제했어요. 원래 배치와 꾸밈으로 돌아갔어요.'}
@@ -1713,7 +1722,7 @@ function dzApply(z,quiet){
    if(z.pattern!=='none')ls.push(DZ_LB.pattern[z.pattern]);
    if(z.slides.some(Boolean))ls.push('배경 순서 '+z.slides.map(function(s,i){return (i+1)+'장 '+(DZ_LB.bg[s]||'기본')}).join(', '));
    if(z.decos.length)ls.push('꾸밈 도형 '+z.decos.length+'개');
-   if(z.p)ls.push('주색 '+TH.p+', 강조색 '+TH.a);
+   if(lock)ls.push('색은 내 색 고정이 켜져 있어 그대로 둠');else if(z.p)ls.push('주색 '+TH.p+', 강조색 '+TH.a);
    $('dzMsg').textContent=(z.summary?z.summary+' / ':'')+'적용: '+ls.join(' / ')+(DATA?'':'. 2번에서 "카드 만들기"를 누르면 보여요.');
   }
  }
