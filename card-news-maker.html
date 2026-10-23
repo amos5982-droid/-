@@ -60,6 +60,28 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .dzb h3{font-size:16px;margin:0 0 4px;font-weight:800}
 .row input.hex{width:92px;padding:7px 8px;font:13px ui-monospace,Menlo,Consolas,monospace;text-transform:lowercase}
 .row input.hex.bad{border-color:#ff7a90}
+/* ----- 좁은 화면(태블릿, 휴대폰) ----- */
+@media (max-width:720px){
+ .app{padding:20px 12px 60px}
+ .app h1{font-size:23px}
+ .app .sub{font-size:14px;margin-bottom:18px}
+ .step{padding:16px 14px;border-radius:12px;margin-bottom:12px}
+ .step h2{font-size:17px;align-items:flex-start}
+ .step h2 i{flex:none}
+ .tabs button{flex:1 1 auto}
+ .row{gap:8px}
+ .row label{flex:1 1 100%;min-width:0;white-space:nowrap}
+ #thRow label:has(#thLock){white-space:normal}
+ .row input[type=text],.row input[type=number],.row select{flex:1 1 auto;min-width:0;width:auto!important}
+ #thRow label{flex:1 1 100%}
+ #thRow input.hex{flex:1 1 auto;width:auto}
+ .row .btn{flex:1 1 auto}
+ #prompt,#json,#fixTxt{height:190px}
+ #thImg{height:72px}
+ .drop{padding:16px 12px}
+ #grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ #zoom .bar2{flex-wrap:wrap;justify-content:center;padding:0 8px}
+}
 #thImg{height:96px;max-width:200px;object-fit:contain;border-radius:8px;background:#0e0f14}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chips button{width:34px;height:34px;border-radius:8px;border:2px solid #3a3e55;cursor:pointer;padding:0}
@@ -715,7 +737,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 
   <div class="step">
     <h2><i>3</i>미리보기와 JPG 저장</h2>
-    <p class="d">빨간 글씨가 있는 장은 글이 넘치거나 겹쳤다는 뜻이에요. 아래 "수정 프롬프트 복사하기"를 누르면 고칠 내용이 자동으로 정리돼요. 제미나이에 붙여 넣고, 받은 JSON을 2번에 다시 넣으세요. 미리보기를 더블클릭하면 크게 볼 수 있어요.</p>
+    <p class="d">빨간 글씨가 있는 장은 글이 넘치거나 겹쳤다는 뜻이에요. 아래 "수정 프롬프트 복사하기"를 누르면 고칠 내용이 자동으로 정리돼요. 제미나이에 붙여 넣고, 받은 JSON을 2번에 다시 넣으세요. 미리보기를 더블클릭(휴대폰은 탭)하면 크게 볼 수 있어요.</p>
     <div class="row" style="margin-top:0"><button class="btn pri" id="save" disabled>JPG 8장 저장</button><span id="saving" class="hint"></span><button class="btn" id="fixT">수정 프롬프트 복사하기 ▾ <span id="fixCount"></span></button></div>
     <div id="fixBox" style="display:none;margin-top:12px"><p class="hint" id="fixHint" style="margin:0 0 8px"></p><textarea id="fixTxt" readonly></textarea><div class="row"><button class="btn pri" id="fixCopy">수정 프롬프트 복사</button><span id="fixOk" class="hint"></span></div></div>
     <div id="grid"></div>
@@ -1456,6 +1478,7 @@ function zoomShow(i){
 var ZT=0;
 function gridOpen(e){var pv=e.target.closest('.pv');if(!pv)return;var all=[].slice.call(document.querySelectorAll('#grid .pv'));ZT=Date.now();zoomShow(all.indexOf(pv))}
 $('grid').addEventListener('dblclick',function(e){if(!$('zoom').classList.contains('on'))gridOpen(e)});
+$('grid').addEventListener('click',function(e){if(window.matchMedia&&matchMedia('(hover: none)').matches&&!$('zoom').classList.contains('on'))gridOpen(e)});
 $('zclose').onclick=function(){$('zoom').classList.remove('on')};
 $('zprev').onclick=function(){zoomShow(ZI-1)};$('znext').onclick=function(){zoomShow(ZI+1)};
 $('zoom').addEventListener('click',function(e){if(Date.now()-ZT<500)return;if(e.target===$('zoom')||e.target.closest('#zbox'))$('zoom').classList.remove('on')});
