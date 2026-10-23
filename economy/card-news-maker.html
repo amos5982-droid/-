@@ -123,6 +123,17 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chips button{width:34px;height:34px;border-radius:8px;border:2px solid #3a3e55;cursor:pointer;padding:0}
 .row input[type=color]{width:46px;height:34px;border:1px solid #3a3e55;border-radius:8px;background:#0e0f14;padding:2px;cursor:pointer}
+/* 색 고르기 창(사진에서 뽑은 색) */
+#thPop{position:fixed;inset:0;z-index:70;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.55);padding:16px}
+#thPop.on{display:flex}
+#thPop .box{background:#171923;border:1px solid #2a2d3d;border-radius:16px;padding:20px;width:min(360px,100%);box-shadow:0 18px 40px rgba(0,0,0,.45)}
+#thPop h3{margin:0 0 4px;font-size:17px;font-weight:800}
+#thPop .pg{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+#thPop .pg button{aspect-ratio:1;border-radius:12px;border:2px solid #3a3e55;cursor:pointer;padding:0;position:relative}
+#thPop .pg button.on{border-color:#fff;box-shadow:0 0 0 3px #ffc53d}
+#thPop .pg button span{position:absolute;left:0;right:0;bottom:-18px;font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa0b8}
+#thPop .pg{row-gap:26px}
+#thPop .ft{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
 </style>
 <style id="cardCss">
 /* ===== 카드(1080x1350) ===== */
@@ -694,7 +705,6 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .bz .bridge{position:absolute;left:80px;right:80px;top:1048px;margin:0}
 .bz .bodyc:has(.bridge){padding-bottom:274px}
 .bz .bodyc:has(.bridge) .terms{position:absolute;left:80px;right:80px;bottom:52px;margin:0}
-.bz.p4 .mid{flex:none}
 .bz.p7 .mid>.cl{gap:36px}
 .bz .row2 .cd .mnum,.bz .row2 .cd .ringw{margin-top:auto;margin-bottom:auto}
 .bz .row2 .cd .cap{margin-top:0;margin-bottom:0;min-height:2.8em;line-height:1.4;text-align:center;display:block;flex:none}
@@ -711,7 +721,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .bz.yel .terms{background:rgba(43,47,136,.10);box-shadow:inset 0 0 0 2px #2B2F88}
 .bz .terms .tl{font-size:19px;letter-spacing:.12em}
 .bz .terms .tl::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:currentColor;margin-right:10px;vertical-align:1px}
-.bz.bz:not(.p4) .mid{justify-content:space-evenly;gap:0!important}
+.bz.bz .mid{justify-content:space-evenly;gap:0!important}
 .bz.bz .mid>*{margin-top:0!important;margin-bottom:0!important}
 .bz .row2 .cd .cap{min-height:0!important}
 .bz .nw,.bz .tx b,.bz .cap b,.bz .ri2 p b,.bz .bd b,.bz .cd.mini p b,.bz .tx .em,.bz .cap .em{white-space:nowrap}
@@ -815,7 +825,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <div class="drop" id="thDrop">이미지를 여기로 끌어다 놓거나 <b>클릭해서 고르세요</b>. 복사한 이미지는 Ctrl+V로 붙여 넣어도 돼요.<input type="file" id="thFile" accept="image/*" hidden></div>
     <div class="row" id="thRow">
       <img id="thImg" alt="참고 이미지" style="display:none">
-      <div id="thPalW" style="display:none"><div class="chips" id="thPal"></div><p class="hint" style="margin:6px 0 0">뽑은 색: 누르면 주색, Shift+클릭하면 강조색</p></div>
+      <div id="thPalW" style="display:none"><div class="chips" id="thPal"></div><p class="hint" style="margin:6px 0 0">뽑은 색: 누르면 주색이 돼요. 주색, 강조색, 밝은 배경 칸을 누르면 이 색들 중에서 고를 수 있어요.</p></div>
       <label>주색 <input type="color" id="thP"><input type="text" class="hex" id="thPx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
       <label>강조색 <input type="color" id="thA"><input type="text" class="hex" id="thAx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
       <label>밝은 배경 <input type="color" id="thL"><input type="text" class="hex" id="thLx" maxlength="7" spellcheck="false" title="색상 코드(예: #2b2f88)를 넣고 Enter"></label>
@@ -862,6 +872,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 </div>
 <div id="stage"></div>
 <div id="toast"></div>
+<div id="thPop" role="dialog" aria-modal="true" aria-labelledby="thPopT"><div class="box"><h3 id="thPopT">색 고르기</h3><p class="hint" style="margin:0">올린 사진에서 뽑은 색이에요.</p><div class="pg" id="thPopG"></div><div class="ft"><button class="btn" id="thPopOwn">다른 색 직접 고르기</button><button class="btn" id="thPopX">닫기</button></div></div></div>
 <div id="zoom"><div class="box" id="zbox"></div><div class="bar2"><button id="zprev">이전</button><span id="zcap"></span><button id="znext">다음</button><button id="zclose">닫기</button></div></div>
 
 <script>
@@ -1587,8 +1598,10 @@ function prep6(){
 }
 var SL_URLS=[];
 function showSaveList(files){
- SL_URLS.forEach(function(u){URL.revokeObjectURL(u)});SL_URLS=files.map(function(f){return URL.createObjectURL(f)});
+ // 새 목록으로 바꾼 뒤에 옛 주소를 지운다(화면에 남은 옛 사진이 지운 주소를 읽지 않게)
+ var old=SL_URLS;SL_URLS=files.map(function(f){return URL.createObjectURL(f)});
  $('saveList').innerHTML=files.map(function(f,i){return '<a class="sv" href="'+SL_URLS[i]+'" download="'+esc(f.name)+'"><img src="'+SL_URLS[i]+'" alt="'+(i+1)+'장"><span>'+(i+1)+'장 저장</span></a>'}).join('');
+ old.forEach(function(u){URL.revokeObjectURL(u)});
  $('saveListW').style.display='block';
 }
 async function save(){
@@ -1725,13 +1738,27 @@ function thExtract(img){
  var a=A&&A.cr>=.15?A.hex:rgb2hex(hsl2rgb([P.h[0],P.h[1]*.6,.85]));
  return {p:P.hex,a:a,pal:pal.map(function(o){return o.hex})};
 }
+var TH_PAL=[];
+function thPalShow(pal){
+ TH_PAL=(pal||[]).slice(0,8);lsSet('thPal',TH_PAL.length?JSON.stringify(TH_PAL):'');
+ $('thPalW').style.display=TH_PAL.length?'':'none';
+ $('thPal').innerHTML=TH_PAL.map(function(h){return '<button type="button" title="'+h+'" data-c="'+h+'" style="background:'+h+'"></button>'}).join('');
+}
+var TH_NAME={P:'주색',A:'강조색',L:'밝은 배경'},TH_OWN=false,TH_FOR=null;
+function thPopOpen(k){
+ TH_FOR=k;var cur=$('th'+k).value.toLowerCase();
+ $('thPopT').textContent=TH_NAME[k]+' 고르기';
+ $('thPopG').innerHTML=TH_PAL.map(function(h){return '<button type="button" data-c="'+h+'" class="'+(h.toLowerCase()===cur?'on':'')+'" style="background:'+h+'" aria-label="'+h+'"><span>'+h+'</span></button>'}).join('');
+ $('thPop').classList.add('on');
+}
+function thPopClose(){$('thPop').classList.remove('on');TH_FOR=null}
 function thLoad(file){
  if(!file||!/^image\//.test(file.type)){$('thHint').textContent='이미지 파일(JPG, PNG, WEBP 등)을 넣어 주세요.';return}
  var url=URL.createObjectURL(file),img=new Image();
  img.onload=function(){
   var r=thExtract(img);if(!r){$('thHint').textContent='색을 뽑지 못했어요. 투명하지 않은 이미지를 넣어 주세요.';return}
-  $('thImg').src=url;$('thImg').style.display='';$('thPalW').style.display='';
-  $('thPal').innerHTML=r.pal.map(function(h){return '<button type="button" title="'+h+'" data-c="'+h+'" style="background:'+h+'"></button>'}).join('');
+  $('thImg').src=url;$('thImg').style.display='';
+  thPalShow(r.pal);
   thApply(r.p,r.a);
  };
  img.onerror=function(){$('thHint').textContent='이미지를 열지 못했어요. 다른 파일로 해 주세요.'};
@@ -1746,6 +1773,14 @@ function thLoad(file){
  dr.addEventListener('drop',function(e){e.preventDefault();dr.classList.remove('ov');thLoad(e.dataTransfer.files[0])});
  document.addEventListener('paste',function(e){var it=[].slice.call((e.clipboardData||{}).items||[]).filter(function(x){return x.kind==='file'&&/^image\//.test(x.type)})[0];if(it){e.preventDefault();thLoad(it.getAsFile())}});
  $('thPal').onclick=function(e){var b=e.target.closest('button');if(!b)return;e.shiftKey?thApply(TH.p,b.dataset.c):thApply(b.dataset.c,TH.a)};
+ // 색 칸을 누르면 휴대폰 기본 색상표 대신 사진에서 뽑은 색을 먼저 보여 준다(뽑은 색이 없으면 기본 색상표)
+ ['P','A','L'].forEach(function(k){$('th'+k).addEventListener('click',function(e){if(TH_OWN||!TH_PAL.length)return;e.preventDefault();thPopOpen(k)})});
+ $('thPopG').onclick=function(e){var b=e.target.closest('button');if(!b||!TH_FOR)return;var k=TH_FOR,inp=$('th'+k);thPopClose();inp.value=b.dataset.c;inp.onchange()};
+ $('thPopOwn').onclick=function(){var inp=$('th'+TH_FOR);thPopClose();TH_OWN=true;try{if(inp.showPicker)inp.showPicker();else inp.click()}catch(e){inp.click()}setTimeout(function(){TH_OWN=false},0)};
+ $('thPopX').onclick=thPopClose;
+ $('thPop').addEventListener('click',function(e){if(e.target===this)thPopClose()});
+ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('thPop').classList.contains('on'))thPopClose()});
+ try{var sp=JSON.parse(lsGet('thPal')||'[]');if(Array.isArray(sp)&&sp.length)thPalShow(sp)}catch(e){}
  $('thP').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thA').onchange=function(){thApply($('thP').value,$('thA').value)};
  $('thSwap').onclick=function(){if(TH.on)thApply(TH.a,TH.p)};
@@ -1759,7 +1794,7 @@ function thLoad(file){
  });
  $('thL').onchange=function(){thSetLight($('thL').value);$('thHint').textContent='밝은 배경을 '+TH.light+'로 바꿨어요.'};
  $('thLock').onchange=function(){lsSet('thLock',this.checked?'1':'')};$('thLock').checked=!!lsGet('thLock');
- $('thReset').onclick=function(){TH.light=null;$('thL').value='#f2f3f6';thApply(null);$('thPalW').style.display='none';$('thPal').innerHTML='';$('thImg').removeAttribute('src');$('thImg').style.display='none';$('thHint').textContent='원래 색으로 돌렸어요.'};
+ $('thReset').onclick=function(){TH.light=null;$('thL').value='#f2f3f6';thApply(null);thPalShow([]);$('thImg').removeAttribute('src');$('thImg').style.display='none';$('thHint').textContent='원래 색으로 돌렸어요.'};
  $('thP').value=TH_BASE.p;$('thA').value=TH_BASE.a1;$('thL').value='#f2f3f6';thSyncHex();
  var sv;try{sv=JSON.parse(lsGet('theme')||'null')}catch(e){}
  if(sv){if(sv.l)thSetLight(sv.l,true);if(sv.p)thApply(sv.p,sv.a,true);$('thHint').textContent='지난번에 쓴 색을 불러왔어요. 원래 색으로 돌리려면 "원래 색으로"를 누르세요.'}
@@ -2145,8 +2180,10 @@ function renderFiles(msgEl){
  var d=DATA,p=(async function(){
   var sl=$('stage').querySelectorAll('.sl,.bz'),L=d.lang,no=String(NO).padStart(2,'0'),pre=DT==='biz'?'biz':'brief',files=[];
   for(var i=0;i<sl.length;i++){
+   // 만드는 도중에 카드를 새로 만들면 이 작업은 조용히 멈춘다
+   if(DATA!==d)return null;
    if(msgEl)msgEl.textContent=(i+1)+'/8 만드는 중…';
-   var cv=await html2canvas(sl[i],{scale:1,width:1080,height:1350,windowWidth:1080,windowHeight:1350,backgroundColor:null,useCORS:true,logging:false,scrollX:0,scrollY:0});
+   var cv;try{cv=await html2canvas(sl[i],{scale:1,width:1080,height:1350,windowWidth:1080,windowHeight:1350,backgroundColor:null,useCORS:true,logging:false,scrollX:0,scrollY:0})}catch(e){if(DATA!==d)return null;throw e}
    var b=await new Promise(function(res){cv.toBlob(res,'image/jpeg',0.93)});
    files.push(new File([b],pre+'-'+no+'-'+L+'-0'+(i+1)+'.jpg',{type:'image/jpeg'}));
   }
@@ -2186,7 +2223,7 @@ function igEnter(){
  if($('igCap').dataset.for!==String(NO)+DATA.lang+DT||!$('igCap').value){$('igCap').value=igCaption(DATA,DT);$('igCap').dataset.for=String(NO)+DATA.lang+DT}
  $('igCnt').textContent=$('igCap').value.length+' / 2200자';
  // 공유 창은 누른 직후에만 열 수 있어서, 이미지는 미리 만들어 둔다
- if(!(IGF&&IGF.data===DATA)){$('igMsg').textContent='이미지를 준비하고 있어요…';renderFiles(null).then(function(){if(CUR_ST==='4')$('igMsg').textContent='준비됐어요. "인스타로 보내기"를 누르세요.'})}
+ if(!(IGF&&IGF.data===DATA)){$('igMsg').textContent='이미지를 준비하고 있어요…';renderFiles(null).then(function(f){if(f&&CUR_ST==='7')$('igMsg').textContent='준비됐어요. "인스타로 보내기"를 누르세요.'})}
  else $('igMsg').textContent='준비됐어요. "인스타로 보내기"를 누르세요.';
 }
 function igGo(){
