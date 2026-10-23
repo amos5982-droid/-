@@ -1551,7 +1551,7 @@ async function make(){
  fit();
  DATA=d;$('save').disabled=false;
  if(d.lang==='ko')lsSet('koJson_'+DT,JSON.stringify(d,null,1));
- if(window.showP)window.showP(window.curP||'make');
+ if(window.showP&&!P_EDITED)window.showP(window.curP||'make'); // 직접 고친 프롬프트는 그대로 둔다
  buildFix();pvCap();
  if(!c.W.length&&!bad)msg('ok','문제없이 만들어졌어요. 맨 위 미리보기를 옆으로 넘겨 확인하세요.');
  else if(bad)msg('warn','자동으로 맞추지 못한 장이 '+bad+'개 있어요(빨간 표시). 아래 "고칠 것"에 고칠 내용이 정리돼 있어요.');
@@ -2265,6 +2265,41 @@ function issueInfo(){
  var a=histGet(CT),last=a[a.length-1];
  $('issueInfo').textContent='이번 호는 '+($('issue').value||'?')+'호예요. 지난 호: '+(last?histLine(last,CT):'없음(첫 호)')+'. 호 번호와 발행일을 바꾸면 미리보기에 바로 반영돼요.';
 }
+/* ===== 작업 상태 기억: 새로고침하거나 앱을 다시 열어도 하던 단계 그대로 이어서 ===== */
+var ST_READY=false,P_EDITED=false;
+function stSave(){
+ if(!ST_READY)return;
+ lsSet('state',JSON.stringify({ct:CT,sport:$('sport').value,lang:LANG,step:CUR_ST,issue:$('issue').value,date:$('date').value,
+  prompt:P_EDITED?$('prompt').value:'',pEdited:P_EDITED,ig:$('igCap').value,igFor:$('igCap').dataset.for||''}));
+}
+(function(){
+ // 단계 이동과 국문/영문 전환도 기억한다
+ var g0=goStep;goStep=function(st){g0(st);stSave()};
+ var l0=setLang;setLang=function(l,o){l0(l,o);stSave()};
+ // 프롬프트를 직접 고쳤을 때만 고친 글을 기억하고, 종목/지난 호/종류를 바꿔 새로 만들어지면 잊는다
+ $('prompt').addEventListener('input',function(){P_EDITED=true});
+ ['sport','past','ctype'].forEach(function(id){$(id).addEventListener(id==='ctype'?'change':'input',function(){P_EDITED=false})});
+ $('pReset').addEventListener('click',function(){P_EDITED=false;stSave()});
+ document.addEventListener('input',stSave);
+ document.addEventListener('change',stSave);
+})();
+(async function(){
+ var s=null;try{s=JSON.parse(lsGet('state')||'null')}catch(e){}
+ if(s){
+  if(s.ct&&s.ct!==CT){$('ctype').value=s.ct;$('ctype').onchange()}
+  if(s.sport){$('sport').value=s.sport;window.showP('make')}
+  if(s.pEdited&&s.prompt){$('prompt').value=s.prompt;P_EDITED=true}
+  if(s.lang&&s.lang!==LANG)setLang(s.lang,{save:false});
+  // 이미 발행(저장)한 호면 다음 호 번호와 오늘 날짜로 새로 시작
+  var pub=histGet(CT).some(function(e){return String(e.no)===String(s.issue)});
+  if(s.issue&&!pub){$('issue').value=s.issue;if(s.date)$('date').value=s.date}
+  if(s.ig){$('igCap').value=s.ig;$('igCap').dataset.for=s.igFor}
+ }
+ ST_READY=true;
+ if($('json').value.trim()){try{await make()}catch(e){}}
+ if(s&&s.step&&s.step!==CUR_ST)goStep(s.step);
+ stSave();
+})();
 </script>
 </body>
 </html>
