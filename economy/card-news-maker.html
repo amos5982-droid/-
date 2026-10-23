@@ -1622,10 +1622,18 @@ function shareNow(){
 }
 /* 영문판 프롬프트: 마지막으로 만든 국문 원고를 자리 표시 대신 넣는다 */
 function enFill(t,type){var j=lsGet('koJson_'+type);return j?t.replace(/\(여기에 국문 (원고를|JSON을) 붙여 넣으세요\)/,function(){return j}):t}
+/* 누른 그 순간에 바로 복사한다(창을 열거나 기다린 뒤에는 휴대폰 브라우저가 복사를 막는다) */
+function copyNow(t){
+ var ta=document.createElement('textarea'),ok=false;ta.value=t;ta.setAttribute('readonly','');
+ ta.style.cssText='position:fixed;top:0;left:-9999px;font-size:16px;opacity:0';document.body.appendChild(ta);
+ ta.focus({preventScroll:true});ta.select();try{ta.setSelectionRange(0,t.length)}catch(e){}
+ try{ok=document.execCommand('copy')}catch(e){}
+ ta.remove();return ok;
+}
 function copyText(t){
+ if(copyNow(t))return Promise.resolve();
  if(navigator.clipboard&&window.isSecureContext)return navigator.clipboard.writeText(t);
- var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;left:-9999px';document.body.appendChild(ta);ta.select();
- var ok=false;try{ok=document.execCommand('copy')}catch(e){}ta.remove();return ok?Promise.resolve():Promise.reject();
+ return Promise.reject();
 }
 var ZI=0;
 function zoomShow(i){
@@ -2238,8 +2246,10 @@ async function makeAndGo(){
  // 복사와 새 탭 열기는 같은 클릭 안에서 바로 해야 브라우저가 막지 않는다
  var GEM='https://gemini.google.com/app';
  function copyOpen(text,msgEl,tail){
-  var w=window.open(GEM,'_blank','noopener');
-  copyText(text).then(function(){msgEl.textContent=w?'복사했어요. 열린 제미나이에 붙여 넣으세요.'+(tail||''):'복사했어요. 제미나이 창이 막혀서 열지 못했어요. gemini.google.com을 직접 열어 붙여 넣으세요.'+(tail||'')},function(){msgEl.textContent='자동 복사가 안 됐어요. 위 칸의 글을 직접 복사해 제미나이에 붙여 넣어 주세요.'});
+  var cp=copyText(text);
+  // noopener를 주면 열려도 null이 와서, 열고 나서 연결만 끊는다
+  var w=window.open(GEM,'_blank');try{if(w)w.opener=null}catch(e){}
+  cp.then(function(){msgEl.textContent=w?'복사했어요. 열린 제미나이에 붙여 넣으세요.'+(tail||''):'복사했어요. 제미나이 창이 막혀서 열지 못했어요. gemini.google.com을 직접 열어 붙여 넣으세요.'+(tail||'')},function(){msgEl.textContent='자동 복사가 안 됐어요. 위 칸의 글을 직접 복사해 제미나이에 붙여 넣어 주세요.'});
  }
  window.copyOpen=copyOpen;
  $('copyG').onclick=function(){copyOpen($('prompt').value,$('copied'),' 받은 답변은 3단계에 붙여 넣으세요.')};
