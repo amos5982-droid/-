@@ -450,6 +450,19 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .bz .x22{font-size:118px;line-height:1;font-weight:900;letter-spacing:-.05em;color:var(--ac);flex:none}
 .bz h2.sm{font-size:64px}
 .bz .tightsrc{gap:7px}
+/* 소제목 묶음과 인용 카드 */
+.bz .lgrp{display:flex;flex-direction:column;gap:14px}
+.bz .cd.qt{position:relative;padding:26px 96px 22px 96px;gap:8px}
+.bz .cd.qt::before{content:"\201C";position:absolute;left:24px;top:14px;font:900 104px/1 Georgia,'Times New Roman',serif;color:var(--ac)}
+/* 닫는 따옴표: 오른쪽 아래에 여는 따옴표와 같은 크기로 */
+.bz .cd.qt::after{content:"\201D";position:absolute;right:24px;bottom:-36px;font:900 104px/1 Georgia,'Times New Roman',serif;color:var(--ac)}
+.bz.light .cd.qt::before,.bz.light .cd.qt::after{color:#2B2F88}
+.bz .qt p{margin:0;font-size:26px;line-height:1.45;font-weight:600;color:var(--fg);text-wrap:pretty}
+.bz .qt p .em{color:var(--ac)}
+.bz.light .qt p .em,.bz.yel .qt p .em{color:var(--fg);background:linear-gradient(transparent 62%,#EBF173 62%)}
+.bz .qt>b{font-size:20px;font-weight:700;letter-spacing:.06em;color:var(--mu)}
+.bz .qt>b::before{content:"— "}
+.bz .qt p b{font-size:inherit;letter-spacing:0}
 /* 마지막 출처 장: 출처 줄 하나하나를 본문 칸 안에 고르게 펼친다 */
 .bz.p8 .mid>.srcs{display:contents}
 /* 제목과 본문 칸 사이의 기본 간격(20px)만큼 당겨서 제목 아래 여백도 출처 사이 여백과 같게 */
@@ -1308,12 +1321,25 @@ BZ_BLOCKS.minis=function(b){
  }).join('')+'</div>';
 };
 BZ_BLOCKS.label=function(b){return '<div class="tl">'+bzMd(b.t)+'</div>'};
-BZ_BLOCKS.quote=function(b){return '<div class="ri2"><b>'+esc(b.src)+'</b><p>'+bzMd(b.t,true)+'</p></div>'};
+// 인용: 다른 카드와 같은 상자에 큰 따옴표, 인용문 아래에 출처
+BZ_BLOCKS.quote=function(b){return '<div class="cd qt"><p>'+bzMd(b.t,true)+'</p><b>'+esc(b.src)+'</b></div>'};
 BZ_BLOCKS.warn=function(b){return '<div class="wn">'+BZ_WN+'<p>'+bzMd(b.t)+'</p></div>'};
 BZ_BLOCKS.bigrows=function(b){
  return (b.items||[]).map(function(x){return '<div class="ri rs"><b class="rbig">'+bzMd(x.big)+'</b><div class="rb"><h3>'+bzMd(x.h)+'</h3><p class="tx">'+bzMd(x.t,true)+'</p></div></div>'}).join('');
 };
-function bzBlocks(a,th){return (a||[]).map(function(b){var f=BZ_BLOCKS[b.block||b.type||b.b];return f?f(b,th):''}).join('')}
+function bzBlocks(a,th){
+ var kind=function(b){return b&&(b.block||b.type||b.b)},one=function(b){var f=BZ_BLOCKS[kind(b)];return f?f(b,th):''},out='';
+ a=a||[];
+ for(var i=0;i<a.length;i++){
+  // 소제목은 바로 아래 내용(이어지는 인용들 포함)과 한 묶음으로 붙인다(본문 칸에서 따로 떨어지지 않게)
+  if(kind(a[i])==='label'&&i+1<a.length){
+   var g=one(a[i])+one(a[i+1]),q=kind(a[i+1])==='quote';i++;
+   while(q&&i+1<a.length&&kind(a[i+1])==='quote'){g+=one(a[i+1]);i++}
+   out+='<div class="lgrp">'+g+'</div>';
+  }else out+=one(a[i]);
+ }
+ return out;
+}
 function bzTerms(L,a){
  return '<div class="terms"><div class="tl">'+BZ_LB[L].terms+'</div><div class="tgrid">'+(a||[]).slice(0,2).map(function(x){return '<p><b>'+bzMd(x.t)+'</b><span>'+bzMd(x.d)+'</span></p>'}).join('')+'</div></div>';
 }

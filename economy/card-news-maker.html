@@ -448,9 +448,11 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .bz .tightsrc{gap:7px}
 /* 소제목 묶음과 인용 카드 */
 .bz .lgrp{display:flex;flex-direction:column;gap:14px}
-.bz .cd.qt{position:relative;padding:26px 30px 22px 96px;gap:8px}
+.bz .cd.qt{position:relative;padding:26px 96px 22px 96px;gap:8px}
 .bz .cd.qt::before{content:"\201C";position:absolute;left:24px;top:14px;font:900 104px/1 Georgia,'Times New Roman',serif;color:var(--ac)}
-.bz.light .cd.qt::before{color:#2B2F88}
+/* 닫는 따옴표: 오른쪽 아래에 여는 따옴표와 같은 크기로 */
+.bz .cd.qt::after{content:"\201D";position:absolute;right:24px;bottom:-36px;font:900 104px/1 Georgia,'Times New Roman',serif;color:var(--ac)}
+.bz.light .cd.qt::before,.bz.light .cd.qt::after{color:#2B2F88}
 .bz .qt p{margin:0;font-size:26px;line-height:1.45;font-weight:600;color:var(--fg);text-wrap:pretty}
 .bz .qt p .em{color:var(--ac)}
 .bz.light .qt p .em,.bz.yel .qt p .em{color:var(--fg);background:linear-gradient(transparent 62%,#EBF173 62%)}
