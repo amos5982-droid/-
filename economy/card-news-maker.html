@@ -744,6 +744,18 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .bz .nw,.bz .tx b,.bz .cap b,.bz .ri2 p b,.bz .bd b,.bz .cd.mini p b,.bz .tx .em,.bz .cap .em{white-space:nowrap}
 .bz .sn{display:inline-block;max-width:100%;vertical-align:top;text-wrap:pretty}
 .bz.bz.en{word-break:normal}
+/* 설명만 있는 단계 줄의 상자 */
+.bz .cd.txb{padding:16px 22px;gap:6px}
+.bz .cd.txb .tx{color:var(--fg)}
+/* 자동 넓게(x1, x2): 본문이 적어 여백이 많이 남으면 글자와 상자를 키운다 */
+.bz.bz.x1 .ri{padding-top:16px;gap:20px}.bz.bz.x1 .ri:not(.rs){grid-template-columns:62px minmax(0,1fr)}.bz.bz.x1 .ri .n{width:62px;height:62px;font-size:27px}.bz.bz.x1 .rb{gap:10px}.bz.bz.x1 .rb h3{font-size:32px}.bz.bz.x1 .tx{font-size:25px}.bz.bz.x1 .cd.txb{padding:20px 26px}
+.bz.bz.x1 .flow.sm .fb{padding:16px 24px}.bz.bz.x1 .fb b{font-size:38px}.bz.bz.x1 .fb small{font-size:22px}.bz.bz.x1 .mx .bl,.bz.bz.x1 .bars.tight .bar .bl{font-size:28px}.bz.bz.x1 .bv{font-size:33px}.bz.bz.x1 .bars.tight .bt{height:26px}.bz.bz.x1 .bars.tight{gap:14px}.bz.bz.x1 .mc{width:32px;height:32px}
+.bz.bz.x1 .duo .mh{font-size:31px}.bz.bz.x1 .duo .mh b{font-size:52px}.bz.bz.x1 .mtr{height:24px}.bz.bz.x1 .duo{gap:12px}.bz.bz.x1 .mnum{font-size:82px}.bz.bz.x1 .cap{font-size:22px}.bz.bz.x1 .cd{padding-top:28px;padding-bottom:28px}
+.bz.bz.x1 .cd.mini h3{font-size:33px}.bz.bz.x1 .cd.mini p{font-size:24px}.bz.bz.x1 .qt p{font-size:29px}.bz.bz.x1 .qt>b{font-size:22px}.bz.bz.x1 .ri.rs h3{font-size:34px}.bz.bz.x1 .lgrp{gap:18px}
+.bz.bz.x2 .ri{padding-top:20px;gap:24px}.bz.bz.x2 .ri:not(.rs){grid-template-columns:68px minmax(0,1fr)}.bz.bz.x2 .ri .n{width:68px;height:68px;font-size:30px}.bz.bz.x2 .rb{gap:14px}.bz.bz.x2 .rb h3{font-size:36px}.bz.bz.x2 .tx{font-size:28px}.bz.bz.x2 .cd.txb{padding:24px 30px}
+.bz.bz.x2 .flow.sm .fb{padding:20px 28px}.bz.bz.x2 .fb b{font-size:43px}.bz.bz.x2 .fb small{font-size:24px}.bz.bz.x2 .mx .bl,.bz.bz.x2 .bars.tight .bar .bl{font-size:31px}.bz.bz.x2 .bv{font-size:37px}.bz.bz.x2 .bars.tight .bt{height:30px}.bz.bz.x2 .bars.tight{gap:18px}.bz.bz.x2 .mc{width:36px;height:36px}
+.bz.bz.x2 .duo .mh{font-size:34px}.bz.bz.x2 .duo .mh b{font-size:58px}.bz.bz.x2 .mtr{height:28px}.bz.bz.x2 .duo{gap:16px}.bz.bz.x2 .mnum{font-size:92px}.bz.bz.x2 .cap{font-size:24px}.bz.bz.x2 .cd{padding-top:34px;padding-bottom:34px}
+.bz.bz.x2 .cd.mini h3{font-size:36px}.bz.bz.x2 .cd.mini p{font-size:26px}.bz.bz.x2 .qt p{font-size:32px}.bz.bz.x2 .qt>b{font-size:24px}.bz.bz.x2 .ri.rs h3{font-size:37px}.bz.bz.x2 .lgrp{gap:22px}
 /* 자동 촘촘하게(z1~z3) */
 .bz.bz.z1 .cd{padding-top:12px;padding-bottom:12px}.bz.bz.z1 .ri{padding-top:8px;gap:14px}.bz.bz.z1 .bars.tight{gap:6px}.bz.bz.z1 .mnum{font-size:62px}.bz.bz.z1 .tx{font-size:20px}.bz.bz.z1 .ri2 p{font-size:20px}.bz.bz.z1 .rb h3{font-size:26px}.bz.bz.z1 .cl{gap:30px}.bz.bz.z1 .srcs li{font-size:20px}.bz.bz.z1 .srcs{gap:7px}.bz.bz.z1 .wn p{font-size:19px}
 .bz.bz.z2 .cd{padding-top:8px;padding-bottom:8px}.bz.bz.z2 .ri{padding-top:6px;gap:12px}.bz.bz.z2 .bars.tight{gap:4px}.bz.bz.z2 .mnum{font-size:54px}.bz.bz.z2 .tx{font-size:19px}.bz.bz.z2 .ri2 p{font-size:19px}.bz.bz.z2 .rb h3{font-size:24px}.bz.bz.z2 .cl{gap:22px}.bz.bz.z2 .srcs li{font-size:18px}.bz.bz.z2 .srcs{gap:5px}.bz.bz.z2 .cd.mini p{font-size:19px}.bz.bz.z2 .cd.mini h3{font-size:24px}
@@ -1293,7 +1305,10 @@ var BZ_PARTS={
 };
 BZ_BLOCKS.steps=function(b){
  return (b.items||[]).map(function(x,k){
-  return '<div class="ri"><span class="n">'+(k<9?'0':'')+(k+1)+'</span><div class="rb"><h3>'+bzMd(x.h)+'</h3>'+(x.parts||[]).map(function(p){var f=BZ_PARTS[p.p||p.type];return f?f(p):''}).join('')+'</div></div>';
+  var ps=x.parts||[],body=ps.map(function(p){var f=BZ_PARTS[p.p||p.type];return f?f(p):''}).join('');
+  // 설명 글만 있는 줄은 옆 줄의 숫자 상자처럼 무게가 실리도록 카드 상자에 담는다
+  if(ps.length&&ps.every(function(p){return (p.p||p.type)==='text'}))body='<div class="cd txb">'+body+'</div>';
+  return '<div class="ri"><span class="n">'+(k<9?'0':'')+(k+1)+'</span><div class="rb"><h3>'+bzMd(x.h)+'</h3>'+body+'</div></div>';
  }).join('');
 };
 BZ_BLOCKS.compare=function(b){
@@ -1463,6 +1478,11 @@ function bzLayout(sl,i){
   var lv=0;
   while(f.free<-6&&lv<3){lv++;sl.classList.add('z'+lv);f=bzFree(sl)}
   if(lv)rep.auto.push('본문이 많아 간격과 글자를 '+lv+'단계 촘촘하게 조정');
+  // 본문이 적어 블록 사이가 많이 비면 글자와 상자를 단계별로 키운다(넘치거나 빡빡해지면 한 단계 되돌림)
+  var xv=0;
+  if(!lv&&i>=1&&i<=5)while(f.g>64&&xv<2){xv++;sl.classList.add('x'+xv);var f2=bzFree(sl);var spill=[].some.call(sl.querySelectorAll('.mnum,.rbig,.bv,.x22,.fb b,.rb h3,.bl'),function(e){return bzOver(e)||e.getBoundingClientRect().right>sl.getBoundingClientRect().right-70});
+   if(f2.free<0||f2.g<36||spill){sl.classList.remove('x'+xv);xv--;break}f=f2}
+  if(xv)rep.auto.push('여백이 많아 글자와 상자를 '+xv+'단계 크게 조정');
   rep.go=Math.round(f.g);
   if(f.free<-6){rep.st='tight';rep.w.push('본문이 칸을 '+Math.round(-f.free)+'px 넘쳐요. 항목이나 글을 줄여 주세요.')}
   else if(f.g>200&&i!==7){rep.st='sparse';rep.w.push('내용이 적어 여백이 커요. 저장해도 괜찮아요.')}
