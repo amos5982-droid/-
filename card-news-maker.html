@@ -1543,6 +1543,86 @@ function buildFix(){
  $('fixTxt').value=t;
 }
 var MAKE_ID=0,MAKE_SRC='';
+/* ===== 글자 대비 검사: 꾸밈 도형까지 그린 실제 배경 위에서 글자마다 대비를 재고, 모자라면 고친다 ===== */
+function ctRgba(v){var m=/rgba?\(([^)]+)\)/.exec(v||'');if(!m)return null;var p=m[1].split(/[\s,\/]+/).filter(Boolean).map(parseFloat);return [p[0],p[1],p[2],p.length>3?p[3]:1]}
+function ctOver(t,b){var a=t[3];return [t[0]*a+b[0]*(1-a),t[1]*a+b[1]*(1-a),t[2]*a+b[2]*(1-a),1]}
+function ctLum(c){var f=function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)};return .2126*f(c[0])+.7152*f(c[1])+.0722*f(c[2])}
+function ctRatio(a,b){var x=ctLum(a),y=ctLum(b);return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)}
+// 글자 뒤에 깔리는 꾸밈 층(디자인 도형, 기본 장식)
+function ctLayers(sl){
+ var out=[];
+ sl.querySelectorAll('.dzw svg.dzs').forEach(function(sv){Array.prototype.forEach.call(sv.children,function(g){if(g.tagName.toLowerCase()!=='defs')out.push(g)})});
+ sl.querySelectorAll('.dcw > *, svg.sun').forEach(function(e){out.push(e)});
+ return out.filter(function(e){var cs=getComputedStyle(e);return cs.display!=='none'&&cs.visibility!=='hidden'});
+}
+// 꾸밈 층만 1080x1350 캔버스에 그린다
+async function ctPaint(sl){
+ var R=sl.getBoundingClientRect(),cv=document.createElement('canvas');cv.width=1080;cv.height=1350;var cx=cv.getContext('2d');
+ var tops=[];sl.querySelectorAll('.dzw svg.dzs, .dcw > *, svg.sun').forEach(function(e){if(getComputedStyle(e).display!=='none')tops.push(e)});
+ for(var i=0;i<tops.length;i++){
+  var e=tops[i],r=e.getBoundingClientRect();if(r.width<1||r.height<1)continue;
+  var op=1;for(var x=e;x&&x!==sl;x=x.parentElement)op*=parseFloat(getComputedStyle(x).opacity)||0;if(op<=0)continue;
+  var cl=e.cloneNode(true),col=getComputedStyle(e).color,svg;
+  if(cl.tagName.toLowerCase()==='svg')svg=cl;else{svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.appendChild(cl);var inner=cl.querySelector('svg');if(!inner)continue;svg=inner}
+  svg.setAttribute('xmlns','http://www.w3.org/2000/svg');svg.setAttribute('width',r.width);svg.setAttribute('height',r.height);svg.style.color=col;svg.setAttribute('color',col);
+  var url='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(svg));
+  await new Promise(function(res){var im=new Image();im.onload=function(){cx.globalAlpha=op;try{cx.drawImage(im,r.left-R.left,r.top-R.top,r.width,r.height)}catch(_){}cx.globalAlpha=1;res()};im.onerror=res;im.src=url});
+ }
+ return cx.getImageData(0,0,1080,1350).data;
+}
+// 글자 줄마다 몇 군데를 찍어 그 자리의 배경색과 대비를 잰다
+function ctCheck(sl,px){
+ var R=sl.getBoundingClientRect(),base=ctRgba(getComputedStyle(sl).backgroundColor)||[255,255,255,1];if(base[3]<1)base=ctOver(base,[255,255,255,1]);
+ var res=[],seen=new Set(),w=document.createTreeWalker(sl,NodeFilter.SHOW_TEXT),n;
+ while((n=w.nextNode())){
+  if(!n.nodeValue.trim())continue;var el=n.parentElement;if(!el||el.closest('svg')||seen.has(el))continue;
+  var cs=getComputedStyle(el);if(cs.visibility==='hidden'||cs.display==='none'||parseFloat(cs.opacity)===0)continue;
+  var tc=ctRgba(cs.color);if(!tc||tc[3]===0)continue;
+  var chain=[];for(var x=el;x&&x!==sl;x=x.parentElement)chain.unshift(x);
+  var bgs=chain.map(function(x){var c=ctRgba(getComputedStyle(x).backgroundColor);return c&&c[3]>0?c:null}).filter(Boolean);
+  var rg=document.createRange();rg.selectNodeContents(n);var rects=Array.prototype.slice.call(rg.getClientRects()).filter(function(q){return q.width>2&&q.height>2});
+  var fs=parseFloat(cs.fontSize),fw=parseInt(cs.fontWeight,10)||400,need=fs>=40||(fs>=28&&fw>=700)?3:4.5;
+  var worst=99,worstND=99,avg=[0,0,0],cnt=0;
+  rects.forEach(function(q){for(var a=0;a<5;a++)for(var b=0;b<2;b++){
+   var X=Math.round(q.left-R.left+q.width*(.1+.2*a)),Y=Math.round(q.top-R.top+q.height*(b?.68:.38));if(X<0||Y<0||X>=1080||Y>=1350)continue;
+   var o=(Y*1080+X)*4,dp=[px[o],px[o+1],px[o+2],px[o+3]/255];
+   var bg=base,bg0=base;if(dp[3]>0)bg=ctOver(dp,bg);
+   bgs.forEach(function(c){bg=ctOver(c,bg);bg0=ctOver(c,bg0)});
+   var fg=tc[3]<1?ctOver(tc,bg):tc,fg0=tc[3]<1?ctOver(tc,bg0):tc;
+   worst=Math.min(worst,ctRatio(fg,bg));worstND=Math.min(worstND,ctRatio(fg0,bg0));avg[0]+=bg[0];avg[1]+=bg[1];avg[2]+=bg[2];cnt++;
+  }});
+  if(!cnt)continue;seen.add(el);
+  if(worst<need)res.push({el:el,need:need,worst:worst,deco:worstND>=need,bg:avg.map(function(v){return v/cnt}),tc:tc,rects:rects});
+ }
+ return res;
+}
+// 글자색을 같은 색감에서 어둡게 또는 밝게 바꿔 대비를 맞춘다
+function ctRecolor(f){
+ var h=rgb2hsl(f.tc.slice(0,3)),dark=ctLum(f.bg)>.35,best=null;
+ for(var k=0;k<=25;k++){var L=dark?h[2]-k*.04:h[2]+k*.04;L=Math.max(0,Math.min(1,L));var c=hsl2rgb([h[0],h[1],L]);if(ctRatio(c,f.bg)>=f.need+.3){best=c;break}if(L===0||L===1)break}
+ if(!best)best=ctRatio([17,17,17],f.bg)>ctRatio([255,255,255],f.bg)?[17,17,17]:[255,255,255];
+ f.el.style.setProperty('color',rgb2hex(best),'important');
+}
+async function ctFix(sl){
+ var notes=[],faded=0,recol=0;
+ for(var pass=0;pass<3;pass++){
+  var px=await ctPaint(sl),bad=ctCheck(sl,px);if(!bad.length)break;
+  var layers=ctLayers(sl),hit=new Set();
+  bad.forEach(function(f){
+   if(!f.deco||pass===2){if(!f.el.dataset.ctc){ctRecolor(f);f.el.dataset.ctc='1';recol++}return}
+   // 꾸밈 도형 때문이면 글자와 겹친 도형을 흐리게
+   layers.forEach(function(g){var r=g.getBoundingClientRect();if(f.rects.some(function(q){return q.right>r.left&&q.left<r.right&&q.bottom>r.top&&q.top<r.bottom}))hit.add(g)});
+  });
+  // 한 번에 다 지우지 않고 단계별로 옅게(1단계 35%, 2단계 12%), 그래도 안 되면 글자색을 바꾼다
+  hit.forEach(function(g){var o=parseFloat(g.style.opacity||g.getAttribute('opacity')||1)||1,k=pass===0?.35:.34;g.setAttribute('opacity',(o*k).toFixed(3));g.style.opacity=(o*k).toFixed(3);if(!g.dataset.ctf){g.dataset.ctf='1';faded++}});
+  if(!hit.size&&!bad.some(function(f){return !f.deco}))break;
+ }
+ var left=ctCheck(sl,await ctPaint(sl));
+ if(faded)notes.push('글자가 잘 보이도록 글자와 겹친 꾸밈 도형 '+faded+'개를 옅게');
+ if(recol)notes.push('글자색 '+recol+'곳을 배경과 대비되게 조정');
+ return {notes:notes,left:left.length};
+}
+
 async function make(){
  var myId=++MAKE_ID;MAKE_SRC=$('json').value;
  $('msgs').innerHTML='';$('grid').innerHTML='';$('pvBar').style.display='none';$('stage').innerHTML='';$('save').disabled=true;DATA=null;FIXM=[];FIXJ=$('json').value;
@@ -1566,6 +1646,9 @@ async function make(){
  if(myId!==MAKE_ID)return; // 그사이 새로 만들기를 시작했으면 이 결과는 버린다
  var slides=st.querySelectorAll('.sl,.bz'),reps=[],bad=0;
  for(var i=0;i<slides.length;i++)reps.push((biz?bzLayout:layout)(slides[i],i));
+ // 글자 대비: 배경과 꾸밈 도형 위에서 글자가 잘 보이는지 재고 고친다
+ for(var i=0;i<slides.length;i++){try{var ct=await ctFix(slides[i]);ct.notes.forEach(function(t){reps[i].auto.push(t)});if(ct.left)reps[i].auto.push('대비가 모자란 글자 '+ct.left+'곳이 남음')}catch(e){}}
+ if(myId!==MAKE_ID)return;
  c.W.forEach(function(t){msg('warn',t);FIXM.push(t)});
  var grid=$('grid');
  reps.forEach(function(r,i){
@@ -1611,10 +1694,15 @@ function prep6(){
  $('save').disabled=true;$('saving').textContent='저장할 8장을 준비하고 있어요…';
  var d=DATA;renderFiles($('saving')).then(function(f){if(DATA!==d)return;$('save').disabled=false;$('saving').textContent='준비됐어요. "JPG 8장 저장"을 누르세요.';showSaveList(f)});
 }
-var SL_URLS=[];
+var SL_URLS=[],SL_FILES=null;
 function showSaveList(files){
- SL_URLS.forEach(function(u){URL.revokeObjectURL(u)});SL_URLS=files.map(function(f){return URL.createObjectURL(f)});
+ // 같은 사진으로 다시 부르면(6단계 진입과 카드 완성이 겹칠 때) 목록을 새로 만들지 않는다
+ if(SL_FILES===files&&$('saveList').children.length){$('saveListW').style.display='block';return}
+ SL_FILES=files;
+ // 새 목록으로 바꾼 뒤에 옛 주소를 지운다(화면에 남은 옛 사진이 지운 주소를 읽지 않게)
+ var old=SL_URLS;SL_URLS=files.map(function(f){return URL.createObjectURL(f)});
  $('saveList').innerHTML=files.map(function(f,i){return '<a class="sv" href="'+SL_URLS[i]+'" download="'+esc(f.name)+'"><img src="'+SL_URLS[i]+'" alt="'+(i+1)+'장"><span>'+(i+1)+'장 저장</span></a>'}).join('');
+ old.forEach(function(u){URL.revokeObjectURL(u)});
  $('saveListW').style.display='block';
 }
 async function save(){
