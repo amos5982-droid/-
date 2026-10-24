@@ -790,7 +790,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="d">카드 종류와 이번 호에서 다룰 주제를 넣어요. 비워 두면 제미나이가 골라요. 지난 호 소재는 발행 기록에서 자동으로 채워져요.</p>
     <div class="row" style="margin:0">
       <label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">경제 이슈 카드뉴스</option><option value="biz">경제 트렌드</option></select></label>
-      <label><span id="lblSubj">주제(비우면 제미나이가 고름)</span> <input type="text" id="sport" placeholder="예: 기준금리" style="width:190px"><span class="pc"><button class="mini" data-paste="sport">붙여넣기</button><button class="mini" data-clear="sport">지우기</button></span></label>
+      <label><span id="lblSubj">주제</span> <input type="text" id="sport" placeholder="예: 기준금리" style="width:190px"><span class="pc"><button class="mini" data-paste="sport">붙여넣기</button><button class="mini" data-clear="sport">지우기</button></span></label>
       <label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 바로 직전 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."><span class="pc"><button class="mini" data-paste="past">붙여넣기</button><button class="mini" data-clear="past">지우기</button></span></label>
     </div>
   </div>
@@ -2303,7 +2303,7 @@ function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('iss
 /* ===== 화면 동작 ===== */
 function setType(k){
  CT=k;$('ctype').value=k;
- $('lblSubj').textContent='주제(비우면 제미나이가 고름)';
+ $('lblSubj').textContent='주제';
  $('sport').placeholder=k==='biz'?'예: 고환율과 장바구니':'예: 기준금리';
  $('sport').style.width='260px';
  $('issue').value=histNext(k,hl());

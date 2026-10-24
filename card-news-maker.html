@@ -2302,7 +2302,7 @@ function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('iss
 /* ===== 화면 동작 ===== */
 function setType(k){
  CT=k;$('ctype').value=k;
- $('lblSubj').textContent=k==='biz'?'주제(비우면 제미나이가 고름)':'종목';
+ $('lblSubj').textContent=k==='biz'?'주제':'종목';
  $('sport').placeholder=k==='biz'?'예: 스폰서십':'예: 야구';
  $('sport').style.width=k==='biz'?'260px':'190px';
  $('issue').value=histNext(k,hl());
