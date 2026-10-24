@@ -822,7 +822,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <details class="gapi" id="gApi"><summary>제미나이 자동 실행 설정(API 키)</summary>
       <p class="hint" style="margin:8px 0 0">Google AI Studio에서 받은 API 키를 넣으면 앱이 직접 제미나이에 보내고, 받은 원고로 카드를 만들어요. 키는 이 기기에만 저장되고 다른 곳으로 보내지 않아요(제미나이 API에만 써요). 국문 원고 만들기는 구글 검색을 써야 해서, 검색 기능이 열린(결제 설정한) 키가 필요해요. 영문 번역과 글 고치기는 무료 키로도 돼요.</p>
       <div class="row"><label>API 키 <input type="password" id="gKey" autocomplete="off" spellcheck="false" placeholder="키를 붙여 넣으세요" style="width:260px"></label><button class="btn" id="gKeySave">저장</button><button class="btn" id="gKeyDel">키 지우기</button></div>
-      <div class="row"><label>모델 <select id="gModel" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="gemini-flash-latest">Gemini Flash 최신(빠름, 기본)</option><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-pro-latest">Gemini Pro 최신(꼼꼼함, 한도 적음)</option></select></label><label><input type="checkbox" id="gAutoFix" checked> 고칠 것이 있으면 자동으로 고치기(최대 2번)</label></div>
+      <div class="row"><label>모델 <select id="gModel" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="gemini-flash-latest">Gemini Flash 최신(빠름, 기본)</option><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-pro-latest">Gemini Pro 최신(꼼꼼함, 한도 적음)</option></select></label><label><input type="checkbox" id="gAutoFix" checked> 고칠 것이 있으면 자동으로 고치기(붙여 넣은 원고도, 최대 2번)</label></div>
       <p class="hint" id="gKeyMsg" style="margin:0"></p>
     </details>
   </div>
@@ -2482,6 +2482,8 @@ function gKey(){return (lsGet('gKey')||'').trim()}
 function gModel(){return lsGet('gModel')||'gemini-flash-latest'}
 // 검색이 필요 없는 일(영문 번역, 검색 없는 고치기)은 빠른 가벼운 모델로(기본 모델은 오래 생각해서 2분 넘게 걸린다)
 var G_LITE='gemini-flash-lite-latest';
+// 이 키로 검색이 한도에 걸리면(무료 키) 키를 바꿀 때까지 고치기는 바로 검색 없이 보낸다(헛요청 줄이기)
+var G_NOSRCH=false;
 async function gCall(text,search,onTick,model){
  var key=gKey();if(!key)throw {code:'nokey'};
  var body={contents:[{role:'user',parts:[{text:text}]}]};if(search)body.tools=[{google_search:{}}];
@@ -2489,7 +2491,7 @@ async function gCall(text,search,onTick,model){
  try{
   var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model||gModel())+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body),signal:ac.signal});
   var j=await r.json().catch(function(){return {}});
-  if(!r.ok)throw {code:r.status,msg:(j.error&&j.error.message)||''};
+  if(!r.ok){if(r.status===429&&search)G_NOSRCH=true;throw {code:r.status,msg:(j.error&&j.error.message)||''}}
   var c=(j.candidates||[])[0];
   if(!c||!c.content||!c.content.parts)throw {code:'empty',msg:(c&&c.finishReason)||((j.promptFeedback||{}).blockReason)||''};
   var g=c.groundingMetadata||{};
@@ -2515,7 +2517,7 @@ async function gApply(text,lang,msgEl,tag){
  for(var round=1;round<=2&&FIXM.length&&$('gAutoFix').checked;round++){
   var fixText=$('fixTxt').value,r;
   msgEl.textContent=tag+'고칠 것 '+FIXM.length+'건을 자동으로 고치는 중('+round+'번째)…';
-  try{r=await gCall(fixText,true,function(sec){msgEl.textContent=tag+'고칠 것을 고치는 중('+round+'번째) '+sec+'초…'})}
+  try{if(G_NOSRCH)throw {code:429};r=await gCall(fixText,true,function(sec){msgEl.textContent=tag+'고칠 것을 고치는 중('+round+'번째) '+sec+'초…'})}
   catch(e){if(e.code!==429)throw e;r=await gCall(fixText+G_NOSEARCH,false,function(sec){msgEl.textContent=tag+'검색 없이 고치는 중('+round+'번째) '+sec+'초…'},G_LITE)}
   $('json').value=r.text;msSave();await makeAndGo();
  }
@@ -2532,7 +2534,7 @@ async function gRun(kind){
  gBusy(true);
  try{
   var r;
-  try{r=await gCall(text,search,function(sec){msgEl.textContent=label+' '+sec+'초…'+(search?' (검색하며 쓰느라 1~3분 걸려요)':'')},search?null:G_LITE)}
+  try{if(kind==='fix'&&G_NOSRCH)throw {code:429};r=await gCall(text,search,function(sec){msgEl.textContent=label+' '+sec+'초…'+(search?' (검색하며 쓰느라 1~3분 걸려요)':'')},search?null:G_LITE)}
   catch(e){if(kind==='fix'&&e.code===429){r=await gCall(text+G_NOSEARCH,false,function(sec){msgEl.textContent='검색 없이 고치는 중 '+sec+'초…'},G_LITE)}else throw e}
   var tag=(kind==='make'&&search&&!r.searched)?'주의: 제미나이가 검색을 쓰지 않고 답했어요. 숫자와 출처를 꼭 확인하세요. ':'';
   var ok=await gApply(r.text,lang,msgEl,tag);
@@ -2542,11 +2544,13 @@ async function gRun(kind){
 }
 (function(){
  $('gKey').value=gKey();$('gModel').value=gModel();
- $('gKeySave').onclick=function(){var k=$('gKey').value.trim();lsSet('gKey',k);$('gKeyMsg').textContent=k?'키를 이 기기에 저장했어요.':'키를 지웠어요.'};
+ $('gKeySave').onclick=function(){var k=$('gKey').value.trim();lsSet('gKey',k);G_NOSRCH=false;$('gKeyMsg').textContent=k?'키를 이 기기에 저장했어요.':'키를 지웠어요.'};
  $('gKeyDel').onclick=function(){$('gKey').value='';lsSet('gKey','');$('gKeyMsg').textContent='키를 지웠어요.'};
  $('gKey').addEventListener('change',function(){$('gKeySave').onclick()});
  $('gModel').onchange=function(){lsSet('gModel',this.value)};
  $('gAutoFix').checked=lsGet('gAutoFix')!=='0';$('gAutoFix').onchange=function(){lsSet('gAutoFix',this.checked?'1':'0')};
+ // 제미나이 앱에서 받아 붙여 넣은 원고도, 키가 있고 자동 고치기가 켜져 있으면 고칠 것을 바로 고친다
+ window.gAfterManual=function(){if(!G_BUSY&&gKey()&&$('gAutoFix').checked&&FIXM.length){$('fixD').open=true;gRun('fix')}};
  $('gRun').onclick=function(){gRun('make')};$('gEn').onclick=function(){gRun('en')};$('gFix').onclick=function(){gRun('fix')};
 })();
 (function(){
@@ -2561,7 +2565,7 @@ async function gRun(kind){
   if(CUR_ST==='7')return goStep('1');
   goStep(ST_SEQ[ST_SEQ.indexOf(CUR_ST)+1]);
  };
- $('make').onclick=makeAndGo;
+ $('make').onclick=function(){makeAndGo().then(function(){if(window.gAfterManual)gAfterManual()})};
  // 복사와 새 탭 열기는 같은 클릭 안에서 바로 해야 브라우저가 막지 않는다
  var GEM='https://gemini.google.com/app';
  function copyOpen(text,msgEl,tail){
@@ -2632,7 +2636,7 @@ function nextLabel(){
   if(!(navigator.clipboard&&navigator.clipboard.readText)){$('json').focus();$('jMsg').textContent='자동 붙여넣기를 쓸 수 없어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣어 주세요.';return}
   navigator.clipboard.readText().then(function(t){
    if(!t||t.indexOf('{')<0){$('jMsg').textContent='복사한 글에 원고(JSON)가 없어요. 제미나이 답변의 코드 블록을 복사해 왔는지 확인해 주세요.';return}
-   $('json').value=t;msSave();$('jMsg').textContent='붙여 넣었어요.';makeAndGo();
+   $('json').value=t;msSave();$('jMsg').textContent='붙여 넣었어요.';makeAndGo().then(function(){if(window.gAfterManual)gAfterManual()});
   },function(){$('json').focus();$('jMsg').textContent='브라우저가 붙여넣기를 막았어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣은 뒤 "카드 만들기"를 눌러 주세요.'});
  };
  $('jClear').onclick=function(){$('json').value='';msSave();$('json').focus();$('jMsg').textContent='지웠어요. 새 원고를 붙여 넣으세요.';nextLabel()};

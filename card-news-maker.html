@@ -281,6 +281,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 @media (min-width:721px){.cpop{align-items:center}.cpbox{border-radius:18px}}
 .lnk{font:inherit;font-size:13px;background:none;border:0;color:#ffc53d;text-decoration:underline;cursor:pointer;padding:0 2px}
 .fixd{margin-top:14px;border:1px solid #2a2d3d;border-radius:10px;padding:10px 14px}
+.gapi{margin-top:12px;border:1px solid #2a2d3d;border-radius:10px;padding:10px 14px}.gapi summary{cursor:pointer;font-weight:800;font-size:14px;color:#c5c8da}
 .fixd summary{cursor:pointer;font-weight:800;font-size:14px;color:#9ae6b4}
 .fixd.bad{border-color:#ff7a90}
 .fixd.bad summary{color:#ffb4c0}
@@ -804,7 +805,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 
   <div class="step" data-st="2">
     <h2><i>2</i>제미나이에 보내기</h2>
-    <p class="d">아래 프롬프트를 복사해 제미나이에 붙여 넣어요. 칸 안의 글은 직접 고쳐도 돼요.</p>
+    <p class="d">아래 프롬프트를 복사해 제미나이에 붙여 넣어요. 칸 안의 글은 직접 고쳐도 돼요. API 키를 넣어 두면 "자동으로 만들기" 한 번으로 카드까지 만들어요.</p>
     <div class="tabs" id="ptabs" style="display:none">
       <button data-k="make" class="on">국문 원고 만들기</button>
       <button data-k="en">영문으로 바꾸기</button>
@@ -812,6 +813,13 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="hint" id="pHint" style="margin:0 0 8px;display:none"></p>
     <textarea id="prompt"></textarea>
     <div class="row"><button class="btn pri" id="copyG">복사하고 제미나이 열기</button><button class="btn" id="copyP">복사만</button><button class="btn" id="pReset">원래 프롬프트로</button><span class="pc"><button class="mini" data-paste="prompt">붙여넣기</button><button class="mini" data-clear="prompt">지우기</button></span><span id="copied" class="hint"></span></div>
+    <div class="row"><button class="btn pri" id="gRun">자동으로 만들기</button><span class="hint" id="gMsg"></span></div>
+    <details class="gapi" id="gApi"><summary>제미나이 자동 실행 설정(API 키)</summary>
+      <p class="hint" style="margin:8px 0 0">Google AI Studio에서 받은 API 키를 넣으면 앱이 직접 제미나이에 보내고, 받은 원고로 카드를 만들어요. 키는 이 기기에만 저장되고 다른 곳으로 보내지 않아요(제미나이 API에만 써요). 국문 원고 만들기는 구글 검색을 써야 해서, 검색 기능이 열린(결제 설정한) 키가 필요해요. 영문 번역과 글 고치기는 무료 키로도 돼요.</p>
+      <div class="row"><label>API 키 <input type="password" id="gKey" autocomplete="off" spellcheck="false" placeholder="키를 붙여 넣으세요" style="width:260px"></label><button class="btn" id="gKeySave">저장</button><button class="btn" id="gKeyDel">키 지우기</button></div>
+      <div class="row"><label>모델 <select id="gModel" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="gemini-flash-latest">Gemini Flash 최신(빠름, 기본)</option><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-pro-latest">Gemini Pro 최신(꼼꼼함, 한도 적음)</option></select></label><label><input type="checkbox" id="gAutoFix" checked> 고칠 것이 있으면 자동으로 고치기(붙여 넣은 원고도, 최대 2번)</label></div>
+      <p class="hint" id="gKeyMsg" style="margin:0"></p>
+    </details>
   </div>
 
   <div class="step" data-st="3">
@@ -819,7 +827,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <div class="lang" id="langT"><button data-l="ko" class="on">국문</button><button data-l="en">영문</button></div>
     <div id="enHelp" class="enh" style="display:none">
       <p>영문판은 국문 원고를 영어로 옮겨 만들어요. 버튼을 누르면 국문 원고가 들어간 프롬프트가 복사되고 제미나이가 열려요. 받은 영문 JSON을 아래 칸에 붙여 넣으세요.</p>
-      <div class="row" style="margin-top:8px"><button class="btn pri" id="enCopyG">영문판 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="enCopy">복사만</button></div>
+      <div class="row" style="margin-top:8px"><button class="btn pri" id="gEn">영문판 자동 만들기</button><button class="btn" id="enCopyG">영문판 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="enCopy">복사만</button></div>
       <p class="hint" id="enMsg" style="margin:6px 0 0"></p>
     </div>
     <p class="d" id="jHint">제미나이 답변의 { 로 시작해서 } 로 끝나는 부분을 복사해 와요. 앞뒤 설명이 섞여도 괜찮아요. "붙여넣기"를 누르면 붙여 넣고 바로 카드를 만들어요.</p>
@@ -834,7 +842,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <div id="msgs"></div>
     <details id="fixD" class="fixd">
       <summary>고칠 것 <span id="fixCount"></span></summary>
-      <div id="fixBox"><p class="hint" id="fixHint" style="margin:8px 0"></p><textarea id="fixTxt" readonly></textarea><div class="row"><button class="btn pri" id="fixCopyG">수정 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="fixCopy">복사만</button><span id="fixOk" class="hint"></span></div></div>
+      <div id="fixBox"><p class="hint" id="fixHint" style="margin:8px 0"></p><textarea id="fixTxt" readonly></textarea><div class="row"><button class="btn pri" id="gFix">자동으로 고치기</button><button class="btn" id="fixCopyG">수정 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="fixCopy">복사만</button><span id="fixOk" class="hint"></span></div></div>
     </details>
   </div>
 
@@ -2435,6 +2443,84 @@ async function makeAndGo(){
  if(DATA&&!FIXM.length)return goStep(LANG==='en'?'6':'4');
  nextLabel();$('fixD').scrollIntoView({block:'center',behavior:'smooth'});
 }
+
+/* ===== 제미나이 API로 직접 보내기: 복사, 붙여넣기 없이 원고를 받아 카드까지 만든다 ===== */
+var G_BUSY=false,G_NOSEARCH='\n\n(지금은 구글 검색을 쓸 수 없어요. 새 숫자나 사실은 넣지 말고, 숫자가 필요하다는 알림은 표현을 낮추는 식으로만 고쳐 주세요.)';
+function gKey(){return (lsGet('gKey')||'').trim()}
+function gModel(){return lsGet('gModel')||'gemini-flash-latest'}
+// 검색이 필요 없는 일(영문 번역, 검색 없는 고치기)은 빠른 가벼운 모델로(기본 모델은 오래 생각해서 2분 넘게 걸린다)
+var G_LITE='gemini-flash-lite-latest';
+// 이 키로 검색이 한도에 걸리면(무료 키) 키를 바꿀 때까지 고치기는 바로 검색 없이 보낸다(헛요청 줄이기)
+var G_NOSRCH=false;
+async function gCall(text,search,onTick,model){
+ var key=gKey();if(!key)throw {code:'nokey'};
+ var body={contents:[{role:'user',parts:[{text:text}]}]};if(search)body.tools=[{google_search:{}}];
+ var ac=new AbortController(),t0=Date.now(),tm=setInterval(function(){if(onTick)onTick(Math.round((Date.now()-t0)/1000))},1000),kill=setTimeout(function(){ac.abort()},300000);
+ try{
+  var r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model||gModel())+':generateContent',{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify(body),signal:ac.signal});
+  var j=await r.json().catch(function(){return {}});
+  if(!r.ok){if(r.status===429&&search)G_NOSRCH=true;throw {code:r.status,msg:(j.error&&j.error.message)||''}}
+  var c=(j.candidates||[])[0];
+  if(!c||!c.content||!c.content.parts)throw {code:'empty',msg:(c&&c.finishReason)||((j.promptFeedback||{}).blockReason)||''};
+  var g=c.groundingMetadata||{};
+  return {text:c.content.parts.filter(function(p){return !p.thought}).map(function(p){return p.text||''}).join(''),searched:!!((g.webSearchQueries||[]).length||(g.groundingChunks||[]).length)};
+ }catch(e){if(e&&e.name==='AbortError')throw {code:'timeout'};if(e&&e.code)throw e;throw {code:'net',msg:String(e&&e.message||e)}}
+ finally{clearInterval(tm);clearTimeout(kill)}
+}
+function gErr(e,search){
+ if(e.code==='nokey')return 'API 키가 없어요. 2단계 "제미나이 자동 실행 설정"에 키를 넣어 주세요.';
+ if(e.code===429)return search?'구글 검색 사용 한도에 걸렸어요. 무료 키는 검색 기능이 막혀 있어요. Google AI Studio에서 결제를 설정하면 쓸 수 있어요. 그동안은 "복사하고 제미나이 열기"로 해 주세요.':'제미나이 사용 한도에 걸렸어요. 잠시 뒤 다시 해 주세요.';
+ if(e.code===400||e.code===401||e.code===403)return 'API 키가 맞지 않거나 이 모델을 쓸 수 없어요.'+(e.msg?' ('+String(e.msg).slice(0,90)+')':'');
+ if(e.code===404)return '이 모델은 더는 쓸 수 없어요. 설정에서 다른 모델을 골라 주세요.';
+ if(e.code==='timeout')return '5분 안에 답이 오지 않았어요. 다시 해 주세요.';
+ if(e.code==='empty')return '제미나이가 빈 답을 보냈어요'+(e.msg?'('+e.msg+')':'')+'. 다시 해 주세요.';
+ return '제미나이에 연결하지 못했어요. 인터넷 연결을 확인해 주세요.'+(e.msg?' ('+String(e.msg).slice(0,90)+')':'');
+}
+function gBusy(on){G_BUSY=on;['gRun','gEn','gFix'].forEach(function(id){var b=$(id);if(b)b.disabled=on})}
+// 받은 원고로 카드를 만들고, 고칠 것이 있으면 자동으로 고친다
+async function gApply(text,lang,msgEl,tag){
+ setLang(lang==='en'?'en':'ko');$('json').value=text;msSave();
+ await makeAndGo();
+ if(!DATA&&!FIXM.length){msgEl.textContent=tag+'받은 답에서 원고(JSON)를 찾지 못했어요. 다시 해 주세요.';return false}
+ for(var round=1;round<=2&&FIXM.length&&$('gAutoFix').checked;round++){
+  var fixText=$('fixTxt').value,r;
+  msgEl.textContent=tag+'고칠 것 '+FIXM.length+'건을 자동으로 고치는 중('+round+'번째)…';
+  try{if(G_NOSRCH)throw {code:429};r=await gCall(fixText,true,function(sec){msgEl.textContent=tag+'고칠 것을 고치는 중('+round+'번째) '+sec+'초…'})}
+  catch(e){if(e.code!==429)throw e;r=await gCall(fixText+G_NOSEARCH,false,function(sec){msgEl.textContent=tag+'검색 없이 고치는 중('+round+'번째) '+sec+'초…'},G_LITE)}
+  $('json').value=r.text;msSave();await makeAndGo();
+ }
+ return true;
+}
+async function gRun(kind){
+ if(G_BUSY)return;
+ var msgEl=kind==='en'?$('enMsg'):kind==='fix'?$('fixOk'):$('gMsg');
+ if(!gKey()){$('gApi').open=true;msgEl.textContent=gErr({code:'nokey'});if(kind!=='make'){goStep('2')}$('gKey').focus();return}
+ var text,lang,search,label;
+ if(kind==='fix'){if(!FIXM.length){msgEl.textContent='지금은 고칠 것이 없어요.';return}text=$('fixTxt').value;lang=LANG;search=true;label='고치는 중'}
+ else if(kind==='en'){text=enFill(PROMPTS[DT==='biz'?'ben':'en'],DT);if(/\(여기에 국문/.test(text)){msgEl.textContent='국문 카드를 먼저 만들어 주세요.';return}lang='en';search=false;label='영문으로 옮기는 중'}
+ else{text=$('prompt').value;lang=window.curP==='en'?'en':'ko';search=lang!=='en';label=lang==='en'?'영문으로 옮기는 중':'제미나이가 검색하고 원고를 쓰는 중'}
+ gBusy(true);
+ try{
+  var r;
+  try{if(kind==='fix'&&G_NOSRCH)throw {code:429};r=await gCall(text,search,function(sec){msgEl.textContent=label+' '+sec+'초…'+(search?' (검색하며 쓰느라 1~3분 걸려요)':'')},search?null:G_LITE)}
+  catch(e){if(kind==='fix'&&e.code===429){r=await gCall(text+G_NOSEARCH,false,function(sec){msgEl.textContent='검색 없이 고치는 중 '+sec+'초…'},G_LITE)}else throw e}
+  var tag=(kind==='make'&&search&&!r.searched)?'주의: 제미나이가 검색을 쓰지 않고 답했어요. 숫자와 출처를 꼭 확인하세요. ':'';
+  var ok=await gApply(r.text,lang,msgEl,tag);
+  if(ok)msgEl.textContent=tag+(FIXM.length?'카드를 만들었어요. 자동으로 못 고친 것 '+FIXM.length+'건은 3단계 "고칠 것"을 확인해 주세요.':'카드를 만들었어요. 미리보기를 확인하세요.');
+ }catch(e){msgEl.textContent=gErr(e,search)}
+ finally{gBusy(false)}
+}
+(function(){
+ $('gKey').value=gKey();$('gModel').value=gModel();
+ $('gKeySave').onclick=function(){var k=$('gKey').value.trim();lsSet('gKey',k);G_NOSRCH=false;$('gKeyMsg').textContent=k?'키를 이 기기에 저장했어요.':'키를 지웠어요.'};
+ $('gKeyDel').onclick=function(){$('gKey').value='';lsSet('gKey','');$('gKeyMsg').textContent='키를 지웠어요.'};
+ $('gKey').addEventListener('change',function(){$('gKeySave').onclick()});
+ $('gModel').onchange=function(){lsSet('gModel',this.value)};
+ $('gAutoFix').checked=lsGet('gAutoFix')!=='0';$('gAutoFix').onchange=function(){lsSet('gAutoFix',this.checked?'1':'0')};
+ // 제미나이 앱에서 받아 붙여 넣은 원고도, 키가 있고 자동 고치기가 켜져 있으면 고칠 것을 바로 고친다
+ window.gAfterManual=function(){if(!G_BUSY&&gKey()&&$('gAutoFix').checked&&FIXM.length){$('fixD').open=true;gRun('fix')}};
+ $('gRun').onclick=function(){gRun('make')};$('gEn').onclick=function(){gRun('en')};$('gFix').onclick=function(){gRun('fix')};
+})();
 (function(){
  document.querySelector('.app').classList.add('wz-on');
  $('wz').onclick=function(e){var b=e.target.closest('button');if(b)goStep(b.dataset.go)};
@@ -2447,7 +2533,7 @@ async function makeAndGo(){
   if(CUR_ST==='7')return goStep('1');
   goStep(ST_SEQ[ST_SEQ.indexOf(CUR_ST)+1]);
  };
- $('make').onclick=makeAndGo;
+ $('make').onclick=function(){makeAndGo().then(function(){if(window.gAfterManual)gAfterManual()})};
  // 복사와 새 탭 열기는 같은 클릭 안에서 바로 해야 브라우저가 막지 않는다
  var GEM='https://gemini.google.com/app';
  function copyOpen(text,msgEl,tail){
@@ -2516,7 +2602,7 @@ function nextLabel(){
   if(!(navigator.clipboard&&navigator.clipboard.readText)){$('json').focus();$('jMsg').textContent='자동 붙여넣기를 쓸 수 없어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣어 주세요.';return}
   navigator.clipboard.readText().then(function(t){
    if(!t||t.indexOf('{')<0){$('jMsg').textContent='복사한 글에 원고(JSON)가 없어요. 제미나이 답변의 코드 블록을 복사해 왔는지 확인해 주세요.';return}
-   $('json').value=t;msSave();$('jMsg').textContent='붙여 넣었어요.';makeAndGo();
+   $('json').value=t;msSave();$('jMsg').textContent='붙여 넣었어요.';makeAndGo().then(function(){if(window.gAfterManual)gAfterManual()});
   },function(){$('json').focus();$('jMsg').textContent='브라우저가 붙여넣기를 막았어요. 칸을 길게 누르거나 Ctrl+V로 붙여 넣은 뒤 "카드 만들기"를 눌러 주세요.'});
  };
  $('jClear').onclick=function(){$('json').value='';msSave();$('json').focus();$('jMsg').textContent='지웠어요. 새 원고를 붙여 넣으세요.';nextLabel()};
