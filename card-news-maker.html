@@ -87,6 +87,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .wzf .btn{min-width:110px}
 .igd{margin-top:14px}.igd summary{cursor:pointer;color:#c5c8da;font-size:14px}
 .histb{background:#12141c;border:1px solid #2a2d3d;border-radius:10px;padding:14px;margin:0 0 12px}
+.teamb{border-top:1px solid #2a2d3d;margin-top:14px;padding-top:12px}.teamb h3{font-size:15px;margin:0 0 4px;font-weight:800}
 .histb h3{font-size:15px;margin:0 0 4px;font-weight:800}
 .hli{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:7px 2px;border-top:1px solid #2a2d3d;font-size:14px}
 .hli:first-child{border-top:0}
@@ -860,6 +861,16 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
       <div id="histList"></div>
       <div class="row"><button class="btn" id="histClr">첫 호부터 다시 시작(기록 지우기)</button><button class="btn" id="histExp">기록 내보내기</button><button class="btn" id="histImp">기록 가져오기</button><input type="file" id="histFile" accept=".json,application/json" hidden></div>
       <p class="hint" id="histMsg"></p>
+      <div class="teamb">
+        <h3>팀과 기록 공유(구글 시트)</h3>
+        <p class="hint" style="margin:0 0 8px">같은 공유 주소와 팀 코드를 넣은 사람끼리 발행 기록과 다음 호 번호를 함께 써요. 처음 한 번만 시트를 준비하면 돼요. <button class="lnk" id="teamHow">설정 방법</button></p>
+        <div id="teamHowBox" class="enh" style="display:none">
+          <p>1. 회사 구글 계정으로 구글 시트를 새로 만들어요.<br>2. 시트 메뉴 확장 프로그램 → Apps Script를 열어요.<br>3. 원래 있던 글을 모두 지우고, 아래 "스크립트 복사"로 복사한 글을 붙여 넣고 저장해요.<br>4. 오른쪽 위 배포 → 새 배포 → 유형 "웹 앱", 실행 계정 "나", 액세스 권한 "모든 사용자"로 배포해요. 처음에는 권한 허용을 물어요.<br>5. 나온 웹 앱 주소(…/exec로 끝남)를 아래 "공유 주소"에 넣고, 팀이 정한 코드를 넣어 "연결"을 눌러요. 팀원에게는 주소와 코드만 알려 주면 돼요.</p>
+          <div class="row" style="margin-top:8px"><button class="btn" id="teamScript">스크립트 복사</button><span class="hint" id="teamScriptMsg"></span></div>
+        </div>
+        <div class="row"><label>공유 주소 <input type="text" id="teamUrl" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec" style="width:300px"></label><label>팀 코드 <input type="text" id="teamCode" spellcheck="false" placeholder="예: sports-team" style="width:150px"></label><button class="btn pri" id="teamGo">연결</button><button class="btn" id="teamSync">지금 맞추기</button><button class="btn" id="teamOff">연결 끊기</button></div>
+        <p class="hint" id="teamMsg" style="margin:6px 0 0"></p>
+      </div>
     </div>
   </div>
 
@@ -2240,7 +2251,8 @@ function histLine(e,t){
 }
 function histPast(t){return histGet(t,'ko').slice(-HIST_N).map(function(e){return histLine(e,t)}).join(', ')}
 function histNext(t,l){
- var a=histGet(t,l),m=parseInt(lsGet(lastKey(t,l)),10)||0;
+ // 팀 공유 중에는 다음 호 번호를 팀 기록만으로 정한다(기기마다 남은 마지막 번호와 어긋나지 않게)
+ var a=histGet(t,l),m=(window.teamOn&&teamOn())?0:(parseInt(lsGet(lastKey(t,l)),10)||0);
  a.forEach(function(e){if(e.no>m)m=e.no});return m+1;
 }
 // 원고에서 이번 호 소재 뽑기: 종목은 표지의 세 줄 요약, 비즈니스는 표지 제목과 흐름 세 줄
@@ -2254,7 +2266,7 @@ function histRecord(d,t,no,date){
  var l=hl(d.lang),a=histGet(t,l),e=histFrom(d,t,no,date),k=-1;
  a.forEach(function(x,i){if(x.no===no)k=i});
  if(k>=0)a[k]=e;else a.push(e);
- histPut(t,a,l);histRender();return true;
+ histPut(t,a,l);histRender();if(window.teamSend)teamSend([{action:'upsert',t:t,l:l,e:e}]);return true;
 }
 function histRender(){
  var t=CT,l=hl(),a=histGet(t,l),box=$('histList');
@@ -2265,18 +2277,18 @@ function histRender(){
   var i=a.length-1-ri,r=document.createElement('div');r.className='hli';
   var nm=e.text?e.text:(e.no!=null?e.no+'호 ':'')+(e.subject||'');
   r.innerHTML='<span>'+esc(nm)+(e.date?' <small>'+esc(e.date)+'</small>':'')+'</span><button class="hdel" title="이 기록 지우기">×</button>';
-  r.querySelector('.hdel').onclick=function(){var b=histGet(t,l);b.splice(i,1);histPut(t,b,l);histRefresh()};
+  r.querySelector('.hdel').onclick=function(){var b=histGet(t,l),gone=b.splice(i,1)[0];histPut(t,b,l);histRefresh();if(gone&&window.teamSend)teamSend([{action:'delete',t:t,l:l,e:{no:gone.no,text:gone.text||''}}])};
   box.appendChild(r);
  });
 }
 // 기록이 바뀌면 지난 호 소재, 다음 호 번호, 프롬프트를 다시 채운다
 function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('issue').value=histNext(CT,hl());if(window.showP)window.showP(window.curP||'make')}
 (function(){
- $('histT').onclick=function(){var b=$('histBox');b.style.display=b.style.display==='none'?'block':'none'};
+ $('histT').onclick=function(){var b=$('histBox');b.style.display=b.style.display==='none'?'block':'none';if(b.style.display==='block'&&window.teamPull)teamPull()};
  $('histClr').onclick=function(){
   var nm=(CT==='biz'?'스포츠 비즈니스 트렌드':'종목 카드뉴스')+' '+(hl()==='en'?'영문':'국문');
   if(!confirm(nm+'의 발행 기록을 모두 지우고 1호부터 다시 시작할까요?\n(다른 종류의 기록은 그대로예요. 지우기 전에 "기록 내보내기"로 백업해 둘 수 있어요.)'))return;
-  histPut(CT,[],hl());lsSet(lastKey(CT,hl()),'');if(hl()==='ko')lsSet(CT==='biz'?'lastIssueB':'lastIssue','');$('issue').value=1;histRefresh();
+  histPut(CT,[],hl());lsSet(lastKey(CT,hl()),'');if(window.teamSend)teamSend([{action:'clear',t:CT,l:hl()}]);if(hl()==='ko')lsSet(CT==='biz'?'lastIssueB':'lastIssue','');$('issue').value=1;histRefresh();
   $('histMsg').textContent=nm+' 기록을 지웠어요. 다음 호는 1호, 지난 호 소재는 "없음(첫 호)"로 들어가요.';
  };
  $('histExp').onclick=function(){
@@ -2302,9 +2314,65 @@ function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('iss
    });
    var last=o.last||{sp_ko:o.lastIssue,biz_ko:o.lastIssueB};
    Object.keys(last).forEach(function(key){var t=key.split('_')[0],l=key.split('_')[1],v=parseInt(last[key],10),c=parseInt(lsGet(lastKey(t,l)),10)||0;if(v>c)lsSet(lastKey(t,l),String(v))});
-   histRefresh();$('histMsg').textContent='기록 '+n+'건을 가져왔어요. 같은 호 번호는 가져온 내용으로 바꿨어요.';
+   histRefresh();if(window.teamOn&&teamOn())teamSend(teamAllOps());$('histMsg').textContent='기록 '+n+'건을 가져왔어요. 같은 호 번호는 가져온 내용으로 바꿨어요.';
   }).catch(function(){$('histMsg').textContent='기록 파일을 읽지 못했어요. "기록 내보내기"로 만든 파일인지 확인해 주세요.'});
  };
+})();
+
+/* ===== 팀 공유: 구글 시트(Apps Script 웹 앱)에 발행 기록을 함께 둔다. 시트가 기준이고, 바뀐 것은 대기열에 쌓았다가 보낸다 ===== */
+var TEAM_GS="/* 카드뉴스 제작기 팀 공유: 발행 기록을 이 구글 시트에 함께 둔다.\n   시트의 확장 프로그램 → Apps Script에 붙여 넣고, 배포 → 새 배포 → 웹 앱(실행: 나, 액세스: 모든 사용자)으로 배포한다.\n   앱에는 배포 주소(…/exec)와 팀 코드를 넣는다. 같은 팀 코드끼리만 같은 기록을 본다. */\nvar SHEET = '발행 기록';\nvar HEAD = ['팀 코드', '종류', '언어', '호', '발행일', '주제', '요약', '메모', '기록 시각'];\n\nfunction sheet_() {\n  var ss = SpreadsheetApp.getActive(), s = ss.getSheetByName(SHEET);\n  if (!s) {\n    s = ss.insertSheet(SHEET);\n    s.appendRow(HEAD);\n    s.setFrozenRows(1);\n    s.getRange('A:H').setNumberFormat('@'); // 발행일 같은 글자가 날짜로 바뀌지 않게\n  }\n  return s;\n}\nfunction out_(o) {\n  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);\n}\nfunction text_(v) {\n  v = String(v == null ? '' : v);\n  return /^[=+\\-@]/.test(v) ? \"'\" + v : v; // 수식으로 읽히지 않게\n}\n\n// 기록 읽기: ?code=팀코드\nfunction doGet(e) {\n  var code = String((e && e.parameter && e.parameter.code) || '');\n  if (!code) return out_({ok: false, error: 'code'});\n  var v = sheet_().getDataRange().getValues(), rows = [];\n  for (var i = 1; i < v.length; i++) {\n    if (String(v[i][0]) !== code) continue;\n    rows.push({t: String(v[i][1]), l: String(v[i][2]), no: v[i][3] === '' ? null : Number(v[i][3]),\n      date: String(v[i][4]), subject: String(v[i][5]), summary: String(v[i][6]), text: String(v[i][7])});\n  }\n  return out_({ok: true, rows: rows});\n}\n\n// 기록 바꾸기: {code, ops:[{action:'upsert'|'delete'|'clear', t, l, e}]}\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  lock.waitLock(20000);\n  try {\n    var b = JSON.parse(e.postData.contents), code = String(b.code || '');\n    if (!code) return out_({ok: false, error: 'code'});\n    var s = sheet_();\n    (b.ops || []).forEach(function (op) { apply_(s, code, op); });\n    return out_({ok: true});\n  } catch (err) {\n    return out_({ok: false, error: String(err)});\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction apply_(s, code, op) {\n  var v = s.getDataRange().getValues(), e = op.e || {};\n  var mine = function (r) { return String(r[0]) === code && String(r[1]) === op.t && String(r[2]) === op.l; };\n  var same = function (r) { return e.no != null && e.no !== '' ? Number(r[3]) === Number(e.no) && r[3] !== '' : String(r[7]) === String(e.text || ''); };\n  if (op.action === 'clear') {\n    for (var i = v.length - 1; i >= 1; i--) if (mine(v[i])) s.deleteRow(i + 1);\n  } else if (op.action === 'delete') {\n    for (var j = v.length - 1; j >= 1; j--) if (mine(v[j]) && same(v[j])) s.deleteRow(j + 1);\n  } else if (op.action === 'upsert') {\n    var row = [code, op.t, op.l, e.no == null ? '' : e.no, text_(e.date), text_(e.subject), text_(e.summary), text_(e.text), new Date()];\n    for (var k = 1; k < v.length; k++) {\n      if (mine(v[k]) && same(v[k])) { s.getRange(k + 1, 1, 1, row.length).setValues([row]); return; }\n    }\n    s.appendRow(row);\n  }\n}\n";
+function teamUrl(){return (lsGet('teamUrl')||'').trim()}
+function teamCode(){return (lsGet('teamCode')||'').trim()}
+function teamOn(){return !!(teamUrl()&&teamCode())}
+function teamMsg(t){$('teamMsg').textContent=t}
+function teamQ(){try{var q=JSON.parse(lsGet('teamQ')||'[]');return Array.isArray(q)?q:[]}catch(e){return []}}
+function hhmm(){var d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function teamSend(ops){if(!teamOn()||!ops.length)return Promise.resolve();lsSet('teamQ',JSON.stringify(teamQ().concat(ops)));return teamFlush()}
+function teamFlush(){
+ var q=teamQ();if(!teamOn()||!q.length)return Promise.resolve(true);
+ // text/plain으로 보내야 Apps Script가 브라우저 사전 확인(CORS) 없이 받는다
+ return fetch(teamUrl(),{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({code:teamCode(),ops:q})})
+  .then(function(r){return r.json()}).then(function(j){if(!j||!j.ok)throw new Error(j&&j.error);lsSet('teamQ',JSON.stringify(teamQ().slice(q.length)));return true})
+  .catch(function(){teamMsg('팀 기록에 올리지 못했어요. 인터넷이 되면 다음에 다시 올려요.');return false});
+}
+var TEAM_AT=0;
+// 시트의 기록을 받아 이 기기의 기록을 바꾼다(올리지 못한 변경이 남아 있으면 덮어쓰지 않는다)
+function teamPull(force){
+ if(!teamOn())return Promise.resolve(false);
+ if(!force&&Date.now()-TEAM_AT<20000)return Promise.resolve(false);TEAM_AT=Date.now();
+ return teamFlush().then(function(ok){
+  if(!ok||teamQ().length)return false;
+  return fetch(teamUrl()+(teamUrl().indexOf('?')<0?'?':'&')+'code='+encodeURIComponent(teamCode())+'&_='+Date.now()).then(function(r){return r.json()}).then(function(j){
+   if(!j||!j.ok)throw new Error(j&&j.error);
+   var by={sp_ko:[],sp_en:[],biz_ko:[],biz_en:[]};
+   (j.rows||[]).forEach(function(r){var k=r.t+'_'+r.l;if(!by[k])return;var e={no:r.no==null||r.no===''||isNaN(+r.no)?null:+r.no,date:r.date||'',subject:r.subject||'',summary:r.summary||'',lang:r.l};if(r.text)e.text=r.text;by[k].push(e)});
+   Object.keys(by).forEach(function(k){var t=k.split('_');histPut(t[0],by[k],t[1])});
+   histRefresh();teamMsg('팀 기록과 맞췄어요('+(j.rows||[]).length+'건, '+hhmm()+').');return true;
+  });
+ }).catch(function(){teamMsg('팀 기록을 받아 오지 못했어요. 공유 주소와 팀 코드, 인터넷 연결을 확인해 주세요.');return false});
+}
+// 이 기기의 기록을 모두 올릴 때 쓰는 목록
+function teamAllOps(){var ops=[];['sp','biz'].forEach(function(t){['ko','en'].forEach(function(l){histGet(t,l).forEach(function(e){ops.push({action:'upsert',t:t,l:l,e:e})})})});return ops}
+(function(){
+ $('teamUrl').value=teamUrl();$('teamCode').value=teamCode();
+ if(teamOn())teamMsg('팀 기록과 연결돼 있어요(팀 코드 '+teamCode()+').');
+ $('teamHow').onclick=function(){var b=$('teamHowBox');b.style.display=b.style.display==='none'?'block':'none'};
+ $('teamScript').onclick=function(){copyText(TEAM_GS).then(function(){$('teamScriptMsg').textContent='복사했어요. Apps Script 편집기에 붙여 넣으세요.'},function(){$('teamScriptMsg').textContent='복사하지 못했어요. 저장소의 team-share/apps-script.gs 파일을 열어 복사해 주세요.'})};
+ $('teamGo').onclick=function(){
+  var u=$('teamUrl').value.trim(),c=$('teamCode').value.trim();
+  if(!/^https:\/\/script\.google(usercontent)?\.com\//.test(u)&&!window.TEAM_TEST){teamMsg('공유 주소는 https://script.google.com/macros/s/…/exec 모양이에요. 배포에서 나온 웹 앱 주소를 넣어 주세요.');return}
+  if(!c){teamMsg('팀 코드를 넣어 주세요. 팀원 모두 같은 코드를 써야 해요.');return}
+  lsSet('teamUrl',u);lsSet('teamCode',c);lsSet('teamQ','[]');teamMsg('연결하는 중…');
+  // 처음 연결: 시트에 이 팀 기록이 없으면 이 기기의 기록을 올리고, 있으면 시트 기록을 받아 온다
+  fetch(u+(u.indexOf('?')<0?'?':'&')+'code='+encodeURIComponent(c)+'&_='+Date.now()).then(function(r){return r.json()}).then(function(j){
+   if(!j||!j.ok)throw new Error();
+   if(!(j.rows||[]).length){var ops=teamAllOps();return teamSend(ops).then(function(ok){if(ok!==false)teamMsg('연결했어요. 이 기기의 기록 '+ops.length+'건을 팀 기록으로 올렸어요.')})}
+   return teamPull(true).then(function(ok){if(ok)teamMsg('연결했어요. 팀 기록 '+j.rows.length+'건을 받아 왔어요. 이제 이 기록을 함께 써요.')});
+  }).catch(function(){teamMsg('연결하지 못했어요. 공유 주소가 맞는지, 배포의 액세스 권한이 "모든 사용자"인지 확인해 주세요.')});
+ };
+ $('teamSync').onclick=function(){if(!teamOn()){teamMsg('먼저 공유 주소와 팀 코드를 넣고 "연결"을 눌러 주세요.');return}teamMsg('맞추는 중…');teamPull(true)};
+ $('teamOff').onclick=function(){lsSet('teamUrl','');lsSet('teamCode','');lsSet('teamQ','[]');$('teamUrl').value='';$('teamCode').value='';teamMsg('연결을 끊었어요. 지금 기록은 이 기기에만 남아요.')};
+ if(teamOn())setTimeout(function(){teamPull(true)},800);
 })();
 
 /* ===== 화면 동작 ===== */
@@ -2433,6 +2501,7 @@ function goStep(st){
  window.scrollTo(0,0);
  if(CUR_ST==='3')nextLabel();
  if(CUR_ST==='4')issueInfo();
+ if((CUR_ST==='1'||CUR_ST==='4')&&window.teamPull)teamPull(); // 다른 팀원이 올린 호를 받아 온다
  if(CUR_ST==='6')prep6();
  if(CUR_ST==='7')igEnter();
 }
