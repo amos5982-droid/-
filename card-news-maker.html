@@ -827,6 +827,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
   <div class="step" data-st="3">
     <h2><i>3</i>원고 붙여 넣기</h2>
     <div class="lang" id="langT"><button data-l="ko" class="on">국문</button><button data-l="en">영문</button></div>
+    <div id="teamDraft" class="enh" style="display:none;border-color:#ffc53d"></div>
     <div id="enHelp" class="enh" style="display:none">
       <p>영문판은 국문 원고를 영어로 옮겨 만들어요. 버튼을 누르면 국문 원고가 들어간 프롬프트가 복사되고 제미나이가 열려요. 받은 영문 JSON을 아래 칸에 붙여 넣으세요.</p>
       <div class="row" style="margin-top:8px"><button class="btn pri" id="gEn">영문판 자동 만들기</button><button class="btn" id="enCopyG">영문판 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="enCopy">복사만</button></div>
@@ -864,12 +865,12 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
       <p class="hint" id="histMsg"></p>
       <div class="teamb">
         <h3>팀과 기록 공유(구글 시트)</h3>
-        <p class="hint" style="margin:0 0 8px">같은 공유 주소와 팀 코드를 넣은 사람끼리 발행 기록과 다음 호 번호를 함께 써요. 처음 한 번만 시트를 준비하면 돼요. <button class="lnk" id="teamHow">설정 방법</button></p>
+        <p class="hint" style="margin:0 0 8px">같은 공유 주소와 팀 코드를 넣은 사람끼리 발행 기록, 다음 호 번호, 작업 중인 원고를 함께 써요. 처음 한 번만 시트를 준비하면 돼요. <button class="lnk" id="teamHow">설정 방법</button></p>
         <div id="teamHowBox" class="enh" style="display:none">
           <p>1. 회사 구글 계정으로 구글 시트를 새로 만들어요.<br>2. 시트 메뉴 확장 프로그램 → Apps Script를 열어요.<br>3. 원래 있던 글을 모두 지우고, 아래 "스크립트 복사"로 복사한 글을 붙여 넣고 저장해요.<br>4. 오른쪽 위 배포 → 새 배포 → 유형 "웹 앱", 실행 계정 "나", 액세스 권한 "모든 사용자"로 배포해요. 처음에는 권한 허용을 물어요.<br>5. 나온 웹 앱 주소(…/exec로 끝남)를 아래 "공유 주소"에 넣고, 팀이 정한 코드를 넣어 "연결"을 눌러요. 팀원에게는 주소와 코드만 알려 주면 돼요.</p>
           <div class="row" style="margin-top:8px"><button class="btn" id="teamScript">스크립트 복사</button><span class="hint" id="teamScriptMsg"></span></div>
         </div>
-        <div class="row"><label>공유 주소 <input type="text" id="teamUrl" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec" style="width:300px"></label><label>팀 코드 <input type="text" id="teamCode" spellcheck="false" placeholder="예: sports-team" style="width:150px"></label><button class="btn pri" id="teamGo">연결</button><button class="btn" id="teamSync">지금 맞추기</button><button class="btn" id="teamOff">연결 끊기</button></div>
+        <div class="row"><label>공유 주소 <input type="text" id="teamUrl" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec" style="width:300px"></label><label>팀 코드 <input type="text" id="teamCode" spellcheck="false" placeholder="예: sports-team" style="width:150px"></label><label>내 이름 <input type="text" id="teamName" placeholder="예: 김OO" style="width:110px"></label><button class="btn pri" id="teamGo">연결</button><button class="btn" id="teamSync">지금 맞추기</button><button class="btn" id="teamOff">연결 끊기</button></div>
         <p class="hint" id="teamMsg" style="margin:6px 0 0"></p>
       </div>
     </div>
@@ -1778,6 +1779,7 @@ async function make(){
  if(d.lang==='ko')lsSet('koJson_'+DT,JSON.stringify(d,null,1));
  if(window.showP&&!P_EDITED)window.showP(window.curP||'make'); // 직접 고친 프롬프트는 그대로 둔다
  buildFix();pvCap();
+ if(window.teamDraftPut)teamDraftPut(); // 팀 공유 중이면 이 원고를 시트에 올린다
  if(!c.W.length&&!bad)msg('ok','문제없이 만들어졌어요. 맨 위 미리보기를 옆으로 넘겨 확인하세요.');
  else if(bad)msg('warn','자동으로 맞추지 못한 장이 '+bad+'개 있어요(빨간 표시). 아래 "고칠 것"에 고칠 내용이 정리돼 있어요.');
 }
@@ -2329,7 +2331,7 @@ function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('iss
 })();
 
 /* ===== 팀 공유: 구글 시트(Apps Script 웹 앱)에 발행 기록을 함께 둔다. 시트가 기준이고, 바뀐 것은 대기열에 쌓았다가 보낸다 ===== */
-var TEAM_GS="/* 카드뉴스 제작기 팀 공유: 발행 기록을 이 구글 시트에 함께 둔다.\n   시트의 확장 프로그램 → Apps Script에 붙여 넣고, 배포 → 새 배포 → 웹 앱(실행: 나, 액세스: 모든 사용자)으로 배포한다.\n   앱에는 배포 주소(…/exec)와 팀 코드를 넣는다. 같은 팀 코드끼리만 같은 기록을 본다. */\nvar SHEET = '발행 기록';\nvar HEAD = ['팀 코드', '종류', '언어', '호', '발행일', '주제', '요약', '메모', '기록 시각'];\n\nfunction sheet_() {\n  var ss = SpreadsheetApp.getActive(), s = ss.getSheetByName(SHEET);\n  if (!s) {\n    s = ss.insertSheet(SHEET);\n    s.appendRow(HEAD);\n    s.setFrozenRows(1);\n    s.getRange('A:H').setNumberFormat('@'); // 발행일 같은 글자가 날짜로 바뀌지 않게\n  }\n  return s;\n}\nfunction out_(o) {\n  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);\n}\nfunction text_(v) {\n  v = String(v == null ? '' : v);\n  return /^[=+\\-@]/.test(v) ? \"'\" + v : v; // 수식으로 읽히지 않게\n}\n\n// 기록 읽기: ?code=팀코드\nfunction doGet(e) {\n  var code = String((e && e.parameter && e.parameter.code) || '');\n  if (!code) return out_({ok: false, error: 'code'});\n  var v = sheet_().getDataRange().getValues(), rows = [];\n  for (var i = 1; i < v.length; i++) {\n    if (String(v[i][0]) !== code) continue;\n    rows.push({t: String(v[i][1]), l: String(v[i][2]), no: v[i][3] === '' ? null : Number(v[i][3]),\n      date: String(v[i][4]), subject: String(v[i][5]), summary: String(v[i][6]), text: String(v[i][7])});\n  }\n  return out_({ok: true, rows: rows});\n}\n\n// 기록 바꾸기: {code, ops:[{action:'upsert'|'delete'|'clear', t, l, e}]}\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  lock.waitLock(20000);\n  try {\n    var b = JSON.parse(e.postData.contents), code = String(b.code || '');\n    if (!code) return out_({ok: false, error: 'code'});\n    var s = sheet_();\n    (b.ops || []).forEach(function (op) { apply_(s, code, op); });\n    return out_({ok: true});\n  } catch (err) {\n    return out_({ok: false, error: String(err)});\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction apply_(s, code, op) {\n  var v = s.getDataRange().getValues(), e = op.e || {};\n  var mine = function (r) { return String(r[0]) === code && String(r[1]) === op.t && String(r[2]) === op.l; };\n  var same = function (r) { return e.no != null && e.no !== '' ? Number(r[3]) === Number(e.no) && r[3] !== '' : String(r[7]) === String(e.text || ''); };\n  if (op.action === 'clear') {\n    for (var i = v.length - 1; i >= 1; i--) if (mine(v[i])) s.deleteRow(i + 1);\n  } else if (op.action === 'delete') {\n    for (var j = v.length - 1; j >= 1; j--) if (mine(v[j]) && same(v[j])) s.deleteRow(j + 1);\n  } else if (op.action === 'upsert') {\n    var row = [code, op.t, op.l, e.no == null ? '' : e.no, text_(e.date), text_(e.subject), text_(e.summary), text_(e.text), new Date()];\n    for (var k = 1; k < v.length; k++) {\n      if (mine(v[k]) && same(v[k])) { s.getRange(k + 1, 1, 1, row.length).setValues([row]); return; }\n    }\n    s.appendRow(row);\n  }\n}\n";
+var TEAM_GS="/* 카드뉴스 제작기 팀 공유: 발행 기록과 작업 원고를 이 구글 시트에 함께 둔다.\n   시트의 확장 프로그램 → Apps Script에 붙여 넣고, 배포 → 새 배포 → 웹 앱(실행: 나, 액세스: 모든 사용자)으로 배포한다.\n   앱에는 배포 주소(…/exec)와 팀 코드를 넣는다. 같은 팀 코드끼리만 같은 기록을 본다. */\nvar SHEET = '발행 기록';\nvar HEAD = ['팀 코드', '종류', '언어', '호', '발행일', '주제', '요약', '메모', '기록 시각'];\nvar DRAFT = '작업 원고';\nvar DHEAD = ['팀 코드', '종류', '언어', '고친 사람', '고친 시각(ms)', '고친 시각', '원고(JSON)'];\n\nfunction sheet_() {\n  var ss = SpreadsheetApp.getActive(), s = ss.getSheetByName(SHEET);\n  if (!s) {\n    s = ss.insertSheet(SHEET);\n    s.appendRow(HEAD);\n    s.setFrozenRows(1);\n    s.getRange('A:H').setNumberFormat('@'); // 발행일 같은 글자가 날짜로 바뀌지 않게\n  }\n  return s;\n}\nfunction draftSheet_() {\n  var ss = SpreadsheetApp.getActive(), s = ss.getSheetByName(DRAFT);\n  if (!s) {\n    s = ss.insertSheet(DRAFT);\n    s.appendRow(DHEAD);\n    s.setFrozenRows(1);\n    s.getRange('A:G').setNumberFormat('@');\n  }\n  return s;\n}\nfunction out_(o) {\n  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);\n}\nfunction text_(v) {\n  v = String(v == null ? '' : v);\n  return /^[=+\\-@]/.test(v) ? \"'\" + v : v; // 수식으로 읽히지 않게\n}\n\n// 기록 읽기: ?code=팀코드 (원고는 &kind=draft)\nfunction doGet(e) {\n  var code = String((e && e.parameter && e.parameter.code) || '');\n  if (!code) return out_({ok: false, error: 'code'});\n  if (e.parameter.kind === 'draft') {\n    var d = draftSheet_().getDataRange().getValues(), drafts = [];\n    for (var n = 1; n < d.length; n++) {\n      if (String(d[n][0]) !== code) continue;\n      drafts.push({t: String(d[n][1]), l: String(d[n][2]), by: String(d[n][3]), at: Number(d[n][4]) || 0, json: String(d[n][6])});\n    }\n    return out_({ok: true, drafts: drafts});\n  }\n  var v = sheet_().getDataRange().getValues(), rows = [];\n  for (var i = 1; i < v.length; i++) {\n    if (String(v[i][0]) !== code) continue;\n    rows.push({t: String(v[i][1]), l: String(v[i][2]), no: v[i][3] === '' ? null : Number(v[i][3]),\n      date: String(v[i][4]), subject: String(v[i][5]), summary: String(v[i][6]), text: String(v[i][7])});\n  }\n  return out_({ok: true, rows: rows});\n}\n\n// 기록 바꾸기: {code, ops:[{action:'upsert'|'delete'|'clear', t, l, e}]}\nfunction doPost(e) {\n  var lock = LockService.getScriptLock();\n  lock.waitLock(20000);\n  try {\n    var b = JSON.parse(e.postData.contents), code = String(b.code || '');\n    if (!code) return out_({ok: false, error: 'code'});\n    var s = sheet_();\n    (b.ops || []).forEach(function (op) { apply_(s, code, op); });\n    return out_({ok: true});\n  } catch (err) {\n    return out_({ok: false, error: String(err)});\n  } finally {\n    lock.releaseLock();\n  }\n}\n\nfunction apply_(s, code, op) {\n  if (op.action === 'draft') return draft_(code, op);\n  var v = s.getDataRange().getValues(), e = op.e || {};\n  var mine = function (r) { return String(r[0]) === code && String(r[1]) === op.t && String(r[2]) === op.l; };\n  var same = function (r) { return e.no != null && e.no !== '' ? Number(r[3]) === Number(e.no) && r[3] !== '' : String(r[7]) === String(e.text || ''); };\n  if (op.action === 'clear') {\n    for (var i = v.length - 1; i >= 1; i--) if (mine(v[i])) s.deleteRow(i + 1);\n  } else if (op.action === 'delete') {\n    for (var j = v.length - 1; j >= 1; j--) if (mine(v[j]) && same(v[j])) s.deleteRow(j + 1);\n  } else if (op.action === 'upsert') {\n    var row = [code, op.t, op.l, e.no == null ? '' : e.no, text_(e.date), text_(e.subject), text_(e.summary), text_(e.text), new Date()];\n    for (var k = 1; k < v.length; k++) {\n      if (mine(v[k]) && same(v[k])) { s.getRange(k + 1, 1, 1, row.length).setValues([row]); return; }\n    }\n    s.appendRow(row);\n  }\n}\n\n// 작업 원고: 종류와 언어마다 한 줄. 더 나중에 고친 것만 덮어쓴다\nfunction draft_(code, op) {\n  var s = draftSheet_(), v = s.getDataRange().getValues(), at = Number(op.at) || Date.now();\n  var json = String(op.json || '');\n  if (json.length > 49000) return; // 시트 칸 한도(5만 자) 안쪽만\n  var row = [code, op.t, op.l, String(op.by || ''), String(at), Utilities.formatDate(new Date(at), 'Asia/Seoul', 'yyyy-MM-dd HH:mm'), json];\n  for (var i = 1; i < v.length; i++) {\n    if (String(v[i][0]) === code && String(v[i][1]) === op.t && String(v[i][2]) === op.l) {\n      if ((Number(v[i][4]) || 0) > at) return;\n      s.getRange(i + 1, 1, 1, row.length).setValues([row]);\n      return;\n    }\n  }\n  s.appendRow(row);\n}\n";
 function teamUrl(){return (lsGet('teamUrl')||'').trim()}
 function teamCode(){return (lsGet('teamCode')||'').trim()}
 function teamOn(){return !!(teamUrl()&&teamCode())}
@@ -2379,9 +2381,39 @@ function teamAllOps(){var ops=[];['sp','biz'].forEach(function(t){['ko','en'].fo
    return teamPull(true).then(function(ok){if(ok)teamMsg('연결했어요. 팀 기록 '+j.rows.length+'건을 받아 왔어요. 이제 이 기록을 함께 써요.')});
   }).catch(function(){teamMsg('연결하지 못했어요. 공유 주소가 맞는지, 배포의 액세스 권한이 "모든 사용자"인지 확인해 주세요.')});
  };
- $('teamSync').onclick=function(){if(!teamOn()){teamMsg('먼저 공유 주소와 팀 코드를 넣고 "연결"을 눌러 주세요.');return}teamMsg('맞추는 중…');teamPull(true)};
+ $('teamSync').onclick=function(){if(!teamOn()){teamMsg('먼저 공유 주소와 팀 코드를 넣고 "연결"을 눌러 주세요.');return}teamMsg('맞추는 중…');teamPull(true);if(window.teamDraftPull)teamDraftPull()};
  $('teamOff').onclick=function(){lsSet('teamUrl','');lsSet('teamCode','');lsSet('teamQ','[]');$('teamUrl').value='';$('teamCode').value='';teamMsg('연결을 끊었어요. 지금 기록은 이 기기에만 남아요.')};
  if(teamOn())setTimeout(function(){teamPull(true)},800);
+})();
+
+/* 작업 원고 공유: 카드를 만들면 그 원고를 시트에 올리고, 팀원이 더 나중에 고친 원고가 있으면 3단계에 알려 준다 */
+var TEAM_DRAFTS=[];
+function teamName(){return (lsGet('teamName')||'').trim()}
+function draftAt(t,l){return +(lsGet('draftAt_'+t+'_'+l)||0)}
+function teamDraftPut(){
+ if(!teamOn()||!DATA)return;
+ var t=DT,l=DATA.lang==='en'?'en':'ko',j=$('json').value;
+ if(lsGet('draftUp_'+t+'_'+l)===j)return; // 이미 올렸거나 팀에서 받은 그대로
+ var at=Date.now();lsSet('draftUp_'+t+'_'+l,j);lsSet('draftAt_'+t+'_'+l,String(at));
+ teamSend([{action:'draft',t:t,l:l,by:teamName()||'이름 없음',at:at,json:j}]);
+}
+function teamDraftPull(){
+ if(!teamOn())return Promise.resolve();
+ return fetch(teamUrl()+(teamUrl().indexOf('?')<0?'?':'&')+'kind=draft&code='+encodeURIComponent(teamCode())+'&_='+Date.now()).then(function(r){return r.json()}).then(function(j){if(j&&j.ok){TEAM_DRAFTS=j.drafts||[];teamDraftShow()}}).catch(function(){});
+}
+function teamDraftShow(){
+ var box=$('teamDraft'),t=CT,l=LANG==='en'?'en':'ko';
+ var d=(TEAM_DRAFTS||[]).filter(function(x){return x.t===t&&x.l===l})[0];
+ if(!d||!d.json||d.at<=draftAt(t,l)||d.json===lsGet(msKey(t,l))){box.style.display='none';return}
+ var tm=new Date(d.at),when=(tm.getMonth()+1)+'/'+tm.getDate()+' '+String(tm.getHours()).padStart(2,'0')+':'+String(tm.getMinutes()).padStart(2,'0');
+ box.innerHTML='<p><b>'+esc(d.by||'팀원')+'</b>님이 '+when+'에 고친 '+(l==='en'?'영문':'국문')+' 원고가 있어요.</p><div class="row" style="margin-top:8px"><button class="btn pri" id="tdLoad">불러와서 카드 만들기</button><button class="btn" id="tdSkip">그대로 두기</button></div>';
+ box.style.display='block';
+ $('tdLoad').onclick=function(){setLang(l);$('json').value=d.json;msSave();lsSet('draftUp_'+t+'_'+l,d.json);lsSet('draftAt_'+t+'_'+l,String(d.at));box.style.display='none';makeAndGo()};
+ $('tdSkip').onclick=function(){lsSet('draftAt_'+t+'_'+l,String(d.at));box.style.display='none'};
+}
+(function(){
+ $('teamName').value=teamName();$('teamName').addEventListener('change',function(){lsSet('teamName',this.value.trim())});
+ if(teamOn())setTimeout(teamDraftPull,1200);
 })();
 
 /* ===== 화면 동작 ===== */
@@ -2511,6 +2543,7 @@ function goStep(st){
  if(CUR_ST==='3')nextLabel();
  if(CUR_ST==='4')issueInfo();
  if((CUR_ST==='1'||CUR_ST==='4')&&window.teamPull)teamPull(); // 다른 팀원이 올린 호를 받아 온다
+ if(CUR_ST==='3'&&window.teamDraftPull)teamDraftPull(); // 팀원이 고친 원고가 있는지 본다
  if(CUR_ST==='6')prep6();
  if(CUR_ST==='7')igEnter();
 }
@@ -2646,6 +2679,7 @@ function setLang(l,opt){
  $('enHelp').style.display=LANG==='en'?'block':'none';
  $('json').placeholder=LANG==='en'?'{ "lang": "en", ... }  제미나이가 준 영문 JSON을 붙여 넣어요':'{ "lang": "ko", ... }';
  enHelpUpdate();nextLabel();
+ if(window.teamDraftShow)teamDraftShow();
 }
 // make()가 원고의 lang을 보고 전환 버튼을 맞춘다(국문 칸에 영문을 넣어도 알아서 영문으로)
 function langSync(l){
