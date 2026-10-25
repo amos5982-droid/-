@@ -292,6 +292,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .lbox input.bad{border-color:#ff7a90}
 .lbox .btn{padding:13px 16px;font-size:16px}
 .lbox .lnk{align-self:center;font-size:14px}
+.lbox .btn+.btn{margin-top:-4px}
 .wz button.acm{border-top:1px solid #2a2d3d;border-radius:0 0 10px 10px;margin-top:4px;font-size:14px;color:#9aa0b8}
 .fixd summary{cursor:pointer;font-weight:800;font-size:14px;color:#9ae6b4}
 .fixd.bad{border-color:#ff7a90}
@@ -942,9 +943,12 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 <div id="toast"></div>
 <div id="login" class="login" style="display:none" role="dialog" aria-modal="true" aria-labelledby="loginT"><div class="lbox">
   <h1 id="loginT">카드뉴스 제작기</h1>
-  <p class="sub">제미나이를 쓸 구글 계정을 먼저 정해요. 구글 계정을 여러 개 쓰면 회사 계정을 넣어 주세요. "복사하고 제미나이 열기"를 누르면 이 계정으로 열려요.</p>
+  <p class="sub">제미나이를 쓸 구글 계정과 API 키를 먼저 정해요. 구글 계정을 여러 개 쓰면 회사 계정을 넣어 주세요. "복사하고 제미나이 열기"를 누르면 이 계정으로 열려요.</p>
   <label>구글 계정(이메일)<input type="email" id="gemAcct" spellcheck="false" autocomplete="email" placeholder="name@company.com"></label>
+  <label>제미나이 API 키(선택)<input type="password" id="loginKey" spellcheck="false" autocomplete="off" placeholder="있으면 붙여 넣으세요"></label>
+  <p class="hint" style="margin:-6px 0 0">키가 있으면 영문판 만들기와 글 고치기를 버튼 하나로 자동으로 해요. 키는 이 기기에만 저장돼요.</p>
   <button class="btn pri" id="loginGo">시작하기</button>
+  <button class="btn" id="loginNoKey">API 없이 시작하기</button>
   <button class="lnk" id="loginSkip">브라우저 기본 계정으로 쓰기</button>
   <p class="hint" id="loginMsg" style="margin:0">한 번 정하면 기억해요. 나중에 1단계 "바꾸기"나 오른쪽 위 단계 메뉴에서 바꿀 수 있어요.</p>
 </div></div>
@@ -2436,12 +2440,18 @@ function teamDraftShow(){
 
 /* ===== 시작 화면: 제미나이를 쓸 구글 계정을 먼저 정한다(처음 한 번, 이후 바꾸기로 다시) ===== */
 function acctShow(){var a=(lsGet('gemAcct')||'').trim();$('acctNow').textContent=a||'브라우저 기본 계정'}
-function loginOpen(){$('gemAcct').value=lsGet('gemAcct')||'';$('gemAcct').classList.remove('bad');$('loginT').textContent=document.querySelector('.top h1').textContent;$('login').style.display='flex';if(window.wzOpen)wzOpen(false);setTimeout(function(){$('gemAcct').focus()},50)}
-function loginDone(a){lsSet('gemAcct',a);lsSet('gemAcctSet','1');$('login').style.display='none';acctShow();if(window.toast)toast(a?a+' 계정으로 제미나이를 열어요.':'브라우저 기본 계정으로 제미나이를 열어요.')}
+function loginOpen(){$('gemAcct').value=lsGet('gemAcct')||'';$('loginKey').value=lsGet('gKey')||'';$('gemAcct').classList.remove('bad');$('loginT').textContent=document.querySelector('.top h1').textContent;$('login').style.display='flex';if(window.wzOpen)wzOpen(false);setTimeout(function(){$('gemAcct').focus()},50)}
+function loginDone(a,key){lsSet('gemAcct',a);lsSet('gemAcctSet','1');
+ if(key!=null){lsSet('gKey',key);if($('gKey'))$('gKey').value=key;if(typeof G_NOSRCH!=='undefined')G_NOSRCH=false}
+ $('login').style.display='none';acctShow();if(window.toast)toast(a?a+' 계정으로 제미나이를 열어요.':'브라우저 기본 계정으로 제미나이를 열어요.')}
 (function(){
  $('loginGo').onclick=function(){var a=$('gemAcct').value.trim();
   if(a&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)&&!/^\d+$/.test(a)){$('gemAcct').classList.add('bad');$('loginMsg').textContent='이메일 모양(name@company.com)으로 넣어 주세요.';return}
-  loginDone(a)};
+  var k=$('loginKey').value.trim();loginDone(a,k||null)};
+ $('loginNoKey').onclick=function(){var a=$('gemAcct').value.trim();
+  if(a&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)&&!/^\d+$/.test(a)){$('gemAcct').classList.add('bad');$('loginMsg').textContent='이메일 모양(name@company.com)으로 넣어 주세요.';return}
+  loginDone(a,null)};
+ $('loginKey').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('loginGo').click()}});
  $('gemAcct').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('loginGo').click()}});
  $('loginSkip').onclick=function(){loginDone('')};
  $('acctChange').onclick=loginOpen;$('acctMenu').onclick=loginOpen;
@@ -2657,7 +2667,7 @@ async function gRun(kind){
 }
 (function(){
  $('gKey').value=gKey();$('gModel').value=gModel();
- $('gKeySave').onclick=function(){var k=$('gKey').value.trim();lsSet('gKey',k);G_NOSRCH=false;$('gKeyMsg').textContent=k?'키를 이 기기에 저장했어요.':'키를 지웠어요.'};
+ $('gKeySave').onclick=function(){var k=$('gKey').value.trim();lsSet('gKey',k);if($('loginKey'))$('loginKey').value=k;G_NOSRCH=false;$('gKeyMsg').textContent=k?'키를 이 기기에 저장했어요.':'키를 지웠어요.'};
  $('gKeyDel').onclick=function(){$('gKey').value='';lsSet('gKey','');$('gKeyMsg').textContent='키를 지웠어요.'};
  $('gKey').addEventListener('change',function(){$('gKeySave').onclick()});
  $('gModel').onchange=function(){lsSet('gModel',this.value)};
