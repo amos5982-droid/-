@@ -797,6 +797,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
   <div class="step" data-st="1">
     <h2><i>1</i>주제 정하기</h2>
     <p class="d">카드 종류와 이번 호에서 다룰 종목(또는 주제)을 넣어요. 지난 호 소재는 발행 기록에서 자동으로 채워져요.</p>
+    <div class="row" style="margin:0 0 12px"><label>구글 계정 <input type="email" id="gemAcct" spellcheck="false" autocomplete="email" placeholder="제미나이를 쓸 회사 이메일" style="width:260px"></label><span class="hint" style="margin:0">구글 계정을 여러 개 쓰면 제미나이를 열 계정을 넣어요. 한 번 넣으면 기억해요.</span></div>
     <div class="row" style="margin:0">
       <label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label>
       <label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"><span class="pc"><button class="mini" data-paste="sport">붙여넣기</button><button class="mini" data-clear="sport">지우기</button></span></label>
@@ -814,7 +815,6 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="hint" id="pHint" style="margin:0 0 8px;display:none"></p>
     <textarea id="prompt"></textarea>
     <div class="row"><button class="btn pri" id="copyG">복사하고 제미나이 열기</button><button class="btn" id="copyP">복사만</button><button class="btn" id="pReset">원래 프롬프트로</button><span class="pc"><button class="mini" data-paste="prompt">붙여넣기</button><button class="mini" data-clear="prompt">지우기</button></span><span id="copied" class="hint"></span></div>
-    <div class="row"><label>제미나이 계정 <input type="text" id="gemAcct" spellcheck="false" autocomplete="email" placeholder="회사 이메일(예: name@company.com)" style="width:260px"></label><span class="hint" style="margin:0">구글 계정을 여러 개 쓰면 열 계정을 정해요. 비우면 브라우저 기본 계정으로 열려요.</span></div>
     <div class="row"><button class="btn pri" id="gRun">자동으로 만들기</button><span class="hint" id="gMsg"></span></div>
     <details class="gapi" id="gApi"><summary>제미나이 자동 실행 설정(API 키)</summary>
       <p class="hint" style="margin:8px 0 0">Google AI Studio에서 받은 API 키를 넣으면 앱이 직접 제미나이에 보내고, 받은 원고로 카드를 만들어요. 키는 이 기기에만 저장되고 다른 곳으로 보내지 않아요(제미나이 API에만 써요). 국문 원고 만들기는 구글 검색을 써야 해서, 검색 기능이 열린(결제 설정한) 키가 필요해요. 영문 번역과 글 고치기는 무료 키로도 돼요.</p>
@@ -2646,9 +2646,11 @@ async function gRun(kind){
  };
  $('make').onclick=function(){makeAndGo().then(function(){if(window.gAfterManual)gAfterManual()})};
  // 복사와 새 탭 열기는 같은 클릭 안에서 바로 해야 브라우저가 막지 않는다
- // 제미나이를 열 구글 계정: 이메일이면 ?authuser=이메일, 숫자면 /u/숫자/(브라우저에 로그인한 순서, 0부터). 비우면 기본 계정
- function gemUrl(){var a=(lsGet('gemAcct')||'').trim();if(/^\d+$/.test(a))return 'https://gemini.google.com/u/'+a+'/app';if(/@/.test(a))return 'https://gemini.google.com/app?authuser='+encodeURIComponent(a);return 'https://gemini.google.com/app'}
- $('gemAcct').value=lsGet('gemAcct')||'';$('gemAcct').addEventListener('change',function(){lsSet('gemAcct',this.value.trim());$('copied').textContent=this.value.trim()?'이제 '+this.value.trim()+' 계정으로 제미나이를 열어요.':'브라우저 기본 계정으로 열어요.'});
+ // 제미나이를 열 구글 계정. 제미나이는 ?authuser=이메일을 무시해서, 구글 계정 선택 주소에서 그 이메일 계정을 고른 뒤 제미나이로 넘긴다.
+ // 숫자면 /u/숫자/(브라우저에 로그인한 순서, 0부터). 비우면 기본 계정
+ var GEM_APP='https://gemini.google.com/app';
+ function gemUrl(){var a=(lsGet('gemAcct')||'').trim();if(/^\d+$/.test(a))return 'https://gemini.google.com/u/'+a+'/app';if(/@/.test(a))return 'https://accounts.google.com/AccountChooser?Email='+encodeURIComponent(a)+'&continue='+encodeURIComponent(GEM_APP);return GEM_APP}
+ $('gemAcct').value=lsGet('gemAcct')||'';$('gemAcct').addEventListener('change',function(){lsSet('gemAcct',this.value.trim());if(window.toast)toast(this.value.trim()?'이제 '+this.value.trim()+' 계정으로 제미나이를 열어요.':'브라우저 기본 계정으로 열어요.')});
  function copyOpen(text,msgEl,tail){
   var cp=copyText(text);
   // noopener를 주면 열려도 null이 와서, 열고 나서 연결만 끊는다
