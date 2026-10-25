@@ -818,6 +818,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="hint" id="pHint" style="margin:0 0 8px;display:none"></p>
     <textarea id="prompt"></textarea>
     <div class="row"><button class="btn pri" id="copyG">복사하고 제미나이 열기</button><button class="btn" id="copyP">복사만</button><button class="btn" id="pReset">원래 프롬프트로</button><span class="pc"><button class="mini" data-paste="prompt">붙여넣기</button><button class="mini" data-clear="prompt">지우기</button></span><span id="copied" class="hint"></span></div>
+    <div class="row"><label>제미나이 계정 <input type="text" id="gemAcct" spellcheck="false" autocomplete="email" placeholder="회사 이메일(예: name@company.com)" style="width:260px"></label><span class="hint" style="margin:0">구글 계정을 여러 개 쓰면 열 계정을 정해요. 비우면 브라우저 기본 계정으로 열려요.</span></div>
     <div class="row"><button class="btn pri" id="gRun">자동으로 만들기</button><span class="hint" id="gMsg"></span></div>
     <details class="gapi" id="gApi"><summary>제미나이 자동 실행 설정(API 키)</summary>
       <p class="hint" style="margin:8px 0 0">Google AI Studio에서 받은 API 키를 넣으면 앱이 직접 제미나이에 보내고, 받은 원고로 카드를 만들어요. 키는 이 기기에만 저장되고 다른 곳으로 보내지 않아요(제미나이 API에만 써요). 국문 원고 만들기는 구글 검색을 써야 해서, 검색 기능이 열린(결제 설정한) 키가 필요해요. 영문 번역과 글 고치기는 무료 키로도 돼요.</p>
@@ -2567,11 +2568,13 @@ async function gRun(kind){
  };
  $('make').onclick=function(){makeAndGo().then(function(){if(window.gAfterManual)gAfterManual()})};
  // 복사와 새 탭 열기는 같은 클릭 안에서 바로 해야 브라우저가 막지 않는다
- var GEM='https://gemini.google.com/app';
+ // 제미나이를 열 구글 계정: 이메일이면 ?authuser=이메일, 숫자면 /u/숫자/(브라우저에 로그인한 순서, 0부터). 비우면 기본 계정
+ function gemUrl(){var a=(lsGet('gemAcct')||'').trim();if(/^\d+$/.test(a))return 'https://gemini.google.com/u/'+a+'/app';if(/@/.test(a))return 'https://gemini.google.com/app?authuser='+encodeURIComponent(a);return 'https://gemini.google.com/app'}
+ $('gemAcct').value=lsGet('gemAcct')||'';$('gemAcct').addEventListener('change',function(){lsSet('gemAcct',this.value.trim());$('copied').textContent=this.value.trim()?'이제 '+this.value.trim()+' 계정으로 제미나이를 열어요.':'브라우저 기본 계정으로 열어요.'});
  function copyOpen(text,msgEl,tail){
   var cp=copyText(text);
   // noopener를 주면 열려도 null이 와서, 열고 나서 연결만 끊는다
-  var w=window.open(GEM,'_blank');try{if(w)w.opener=null}catch(e){}
+  var w=window.open(gemUrl(),'_blank');try{if(w)w.opener=null}catch(e){}
   cp.then(function(){msgEl.textContent=w?'복사했어요. 열린 제미나이에 붙여 넣으세요.'+(tail||''):'복사했어요. 제미나이 창이 막혀서 열지 못했어요. gemini.google.com을 직접 열어 붙여 넣으세요.'+(tail||'')},function(){msgEl.textContent='자동 복사가 안 됐어요. 위 칸의 글을 직접 복사해 제미나이에 붙여 넣어 주세요.'});
  }
  window.copyOpen=copyOpen;
