@@ -278,6 +278,16 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 .lnk{font:inherit;font-size:13px;background:none;border:0;color:#ffc53d;text-decoration:underline;cursor:pointer;padding:0 2px}
 .fixd{margin-top:14px;border:1px solid #2a2d3d;border-radius:10px;padding:10px 14px}
 .gapi{margin-top:12px;border:1px solid #2a2d3d;border-radius:10px;padding:10px 14px}.gapi summary{cursor:pointer;font-weight:800;font-size:14px;color:#c5c8da}
+.login{position:fixed;inset:0;z-index:90;background:#0e0f14;display:flex;align-items:center;justify-content:center;padding:20px}
+.lbox{width:min(420px,100%);background:#171923;border:1px solid #2a2d3d;border-radius:18px;padding:30px 24px 24px;display:flex;flex-direction:column;gap:14px}
+.lbox h1{font-size:24px;margin:0;font-weight:800;letter-spacing:-.02em}
+.lbox .sub{margin:0;color:#9aa0b8;font-size:15px}
+.lbox label{display:flex;flex-direction:column;gap:6px;font-size:14px;color:#c5c8da}
+.lbox input{background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:10px;padding:13px 14px;font:inherit;font-size:16px}
+.lbox input.bad{border-color:#ff7a90}
+.lbox .btn{padding:13px 16px;font-size:16px}
+.lbox .lnk{align-self:center;font-size:14px}
+.wz button.acm{border-top:1px solid #2a2d3d;border-radius:0 0 10px 10px;margin-top:4px;font-size:14px;color:#9aa0b8}
 .fixd summary{cursor:pointer;font-weight:800;font-size:14px;color:#9ae6b4}
 .fixd.bad{border-color:#ff7a90}
 .fixd.bad summary{color:#ffb4c0}
@@ -790,7 +800,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
   <div class="top">
     <h1>경제 카드뉴스 제작기</h1>
     <button class="wzbtn" id="wzBtn" aria-haspopup="true" aria-expanded="false"><span id="wzCur">1 주제</span> <span class="car">▾</span></button>
-    <nav class="wz" id="wz"><button data-go="1">1 주제</button><button data-go="2">2 제미나이</button><button data-go="3">3 원고</button><button data-go="4">4 발행호</button><button data-go="5">5 디자인</button><button data-go="6">6 저장</button><button data-go="7">7 인스타</button></nav>
+    <nav class="wz" id="wz"><!-- 단계 메뉴 --><button data-go="1">1 주제</button><button data-go="2">2 제미나이</button><button data-go="3">3 원고</button><button data-go="4">4 발행호</button><button data-go="5">5 디자인</button><button data-go="6">6 저장</button><button data-go="7">7 인스타</button><button class="acm" id="acctMenu">구글 계정 바꾸기</button></nav>
   </div>
   <div id="pvBar" style="display:none">
     <p class="hint" id="pvCap"></p>
@@ -801,7 +811,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
   <div class="step" data-st="1">
     <h2><i>1</i>주제 정하기</h2>
     <p class="d">카드 종류와 이번 호에서 다룰 주제를 넣어요. 비워 두면 제미나이가 골라요. 지난 호 소재는 발행 기록에서 자동으로 채워져요.</p>
-    <div class="row" style="margin:0 0 12px"><label>구글 계정 <input type="email" id="gemAcct" spellcheck="false" autocomplete="email" placeholder="제미나이를 쓸 회사 이메일" style="width:260px"></label><span class="hint" style="margin:0">구글 계정을 여러 개 쓰면 제미나이를 열 계정을 넣어요. 한 번 넣으면 기억해요.</span></div>
+    <p class="hint acl" style="margin:0 0 12px">구글 계정: <b id="acctNow"></b> <button class="lnk" id="acctChange">바꾸기</button></p>
     <div class="row" style="margin:0">
       <label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">경제 이슈 카드뉴스</option><option value="biz">경제 트렌드</option></select></label>
       <label><span id="lblSubj">주제</span> <input type="text" id="sport" placeholder="예: 기준금리" style="width:190px"><span class="pc"><button class="mini" data-paste="sport">붙여넣기</button><button class="mini" data-clear="sport">지우기</button></span></label>
@@ -923,6 +933,14 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 </div>
 <div id="stage"></div>
 <div id="toast"></div>
+<div id="login" class="login" style="display:none" role="dialog" aria-modal="true" aria-labelledby="loginT"><div class="lbox">
+  <h1 id="loginT">카드뉴스 제작기</h1>
+  <p class="sub">제미나이를 쓸 구글 계정을 먼저 정해요. 구글 계정을 여러 개 쓰면 회사 계정을 넣어 주세요. "복사하고 제미나이 열기"를 누르면 이 계정으로 열려요.</p>
+  <label>구글 계정(이메일)<input type="email" id="gemAcct" spellcheck="false" autocomplete="email" placeholder="name@company.com"></label>
+  <button class="btn pri" id="loginGo">시작하기</button>
+  <button class="lnk" id="loginSkip">브라우저 기본 계정으로 쓰기</button>
+  <p class="hint" id="loginMsg" style="margin:0">한 번 정하면 기억해요. 나중에 1단계 "바꾸기"나 오른쪽 위 단계 메뉴에서 바꿀 수 있어요.</p>
+</div></div>
 <div id="cpop" class="cpop"><div class="cpbox">
   <h3 id="cpT">색 고르기</h3>
   <p class="hint" id="cpH" style="margin:0 0 8px"></p>
@@ -2338,6 +2356,22 @@ function histRefresh(){histRender();$('past').value=histPast(CT);if(!DATA)$('iss
  };
 })();
 
+/* ===== 시작 화면: 제미나이를 쓸 구글 계정을 먼저 정한다(처음 한 번, 이후 바꾸기로 다시) ===== */
+function acctShow(){var a=(lsGet('gemAcct')||'').trim();$('acctNow').textContent=a||'브라우저 기본 계정'}
+function loginOpen(){$('gemAcct').value=lsGet('gemAcct')||'';$('gemAcct').classList.remove('bad');$('loginT').textContent=document.querySelector('.top h1').textContent;$('login').style.display='flex';if(window.wzOpen)wzOpen(false);setTimeout(function(){$('gemAcct').focus()},50)}
+function loginDone(a){lsSet('gemAcct',a);lsSet('gemAcctSet','1');$('login').style.display='none';acctShow();if(window.toast)toast(a?a+' 계정으로 제미나이를 열어요.':'브라우저 기본 계정으로 제미나이를 열어요.')}
+(function(){
+ $('loginGo').onclick=function(){var a=$('gemAcct').value.trim();
+  if(a&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)&&!/^\d+$/.test(a)){$('gemAcct').classList.add('bad');$('loginMsg').textContent='이메일 모양(name@company.com)으로 넣어 주세요.';return}
+  loginDone(a)};
+ $('gemAcct').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();$('loginGo').click()}});
+ $('loginSkip').onclick=function(){loginDone('')};
+ $('acctChange').onclick=loginOpen;$('acctMenu').onclick=loginOpen;
+ acctShow();
+ // 처음 쓰는 기기: 예전에 계정을 넣어 둔 적이 있으면 그대로 쓰고, 없으면 시작 화면부터
+ if(lsGet('gemAcctSet')!=='1'){if((lsGet('gemAcct')||'').trim())lsSet('gemAcctSet','1');else loginOpen()}
+})();
+
 /* ===== 화면 동작 ===== */
 function setType(k){
  CT=k;$('ctype').value=k;
@@ -2556,7 +2590,7 @@ async function gRun(kind){
 })();
 (function(){
  document.querySelector('.app').classList.add('wz-on');
- $('wz').onclick=function(e){var b=e.target.closest('button');if(b)goStep(b.dataset.go)};
+ $('wz').onclick=function(e){var b=e.target.closest('button');if(b&&b.dataset.go)goStep(b.dataset.go)};
  $('wzBtn').onclick=function(e){e.stopPropagation();wzOpen(!$('wz').classList.contains('open'))};
  document.addEventListener('click',function(e){if(!e.target.closest('#wz'))wzOpen(false)});
  document.addEventListener('keydown',function(e){if(e.key==='Escape')wzOpen(false)});
@@ -2572,7 +2606,6 @@ async function gRun(kind){
  // 숫자면 /u/숫자/(브라우저에 로그인한 순서, 0부터). 비우면 기본 계정
  var GEM_APP='https://gemini.google.com/app';
  function gemUrl(){var a=(lsGet('gemAcct')||'').trim();if(/^\d+$/.test(a))return 'https://gemini.google.com/u/'+a+'/app';if(/@/.test(a))return 'https://accounts.google.com/AccountChooser?Email='+encodeURIComponent(a)+'&continue='+encodeURIComponent(GEM_APP);return GEM_APP}
- $('gemAcct').value=lsGet('gemAcct')||'';$('gemAcct').addEventListener('change',function(){lsSet('gemAcct',this.value.trim());if(window.toast)toast(this.value.trim()?'이제 '+this.value.trim()+' 계정으로 제미나이를 열어요.':'브라우저 기본 계정으로 열어요.')});
  function copyOpen(text,msgEl,tail){
   var cp=copyText(text);
   // noopener를 주면 열려도 null이 와서, 열고 나서 연결만 끊는다
