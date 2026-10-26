@@ -2810,11 +2810,20 @@ async function gRun(kind){
  // 숫자면 /u/숫자/(브라우저에 로그인한 순서, 0부터). 비우면 기본 계정
  var GEM_APP='https://gemini.google.com/app';
  function gemUrl(){var a=(lsGet('gemAcct')||'').trim();if(/^\d+$/.test(a))return 'https://gemini.google.com/u/'+a+'/app';if(/@/.test(a))return 'https://accounts.google.com/AccountChooser?Email='+encodeURIComponent(a)+'&continue='+encodeURIComponent(GEM_APP);return GEM_APP}
+ var GEM_WIN=null;
  function copyOpen(text,msgEl,tail){
   var cp=copyText(text);
   // noopener를 주면 열려도 null이 와서, 열고 나서 연결만 끊는다
-  var w=window.open(gemUrl(),'_blank');try{if(w)w.opener=null}catch(e){}
-  cp.then(function(){msgEl.textContent=w?'복사했어요. 열린 제미나이에 붙여 넣으세요.'+(tail||''):'복사했어요. 제미나이 창이 막혀서 열지 못했어요. gemini.google.com을 직접 열어 붙여 넣으세요.'+(tail||'')},function(){msgEl.textContent='자동 복사가 안 됐어요. 위 칸의 글을 직접 복사해 제미나이에 붙여 넣어 주세요.'});
+  var w=null,side=false;
+  // PC(넓은 화면, 마우스)에서는 제미나이를 화면 오른쪽 40% 크기의 별도 창으로 띄워 앱과 나란히 본다
+  try{if(matchMedia('(pointer:fine)').matches&&screen.availWidth>=1100){
+   var sw=Math.round(screen.availWidth*0.4),sl=(screen.availLeft||0)+screen.availWidth-sw,st=screen.availTop||0;
+   if(GEM_WIN&&!GEM_WIN.closed){w=GEM_WIN;side=true;try{w.focus()}catch(e){}}
+   else{w=window.open(gemUrl(),'_blank','popup=yes,width='+sw+',height='+screen.availHeight+',left='+sl+',top='+st);side=!!w;GEM_WIN=w}
+  }}catch(e){w=null}
+  if(!w)w=window.open(gemUrl(),'_blank');
+  try{if(w)w.opener=null}catch(e){}
+  cp.then(function(){msgEl.textContent=w?'복사했어요. '+(side?'오른쪽에 열린 제미나이 창에 붙여 넣으세요. 앱 창을 왼쪽으로 옮기면 나란히 볼 수 있어요.':'열린 제미나이에 붙여 넣으세요.')+(tail||''):'복사했어요. 제미나이 창이 막혀서 열지 못했어요. gemini.google.com을 직접 열어 붙여 넣으세요.'+(tail||'')},function(){msgEl.textContent='자동 복사가 안 됐어요. 위 칸의 글을 직접 복사해 제미나이에 붙여 넣어 주세요.'});
  }
  window.copyOpen=copyOpen;
  $('copyG').onclick=function(){copyOpen($('prompt').value,$('copied'),' 받은 답변은 3단계에 붙여 넣으세요.')};
