@@ -794,6 +794,11 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 </style>
 <style id="uiTheme">
 .top.stuck{border-bottom-color:#e8e8e8}
+.top .inst{margin-left:auto;margin-right:8px;background:var(--ui-blue);border-color:var(--ui-blue);color:#fff}
+.top .inst:hover{background:var(--ui-blue2);border-color:var(--ui-blue2)}
+#instPop .cpbox ol{margin:8px 0 14px;padding-left:20px;color:var(--ui-ink2);font-size:14px}
+#instPop .cpbox li{margin:4px 0}
+#instPop .cpbox h4{margin:12px 0 4px}
 .step{scroll-margin-top:84px}
 /* ===== 제작기 화면 디자인: DESIGN-dji.md (흰 바탕, 잉크색 글자, 파란 알약 버튼 하나, 그림자는 떠 있는 것에만). 카드(1080x1350)에는 쓰지 않는다 ===== */
 :root{--ui-blue:#0070d5;--ui-blue2:#0060ef;--ui-tint:#deeafd;--ui-link:#1890ff;--ui-orange:#be4e04;--ui-err:#f5222d;--ui-ink:#262626;--ui-ink2:#595959;--ui-ink3:#8c8c8c;--ui-soft:#f7f9fa;--ui-panel:#f6f8f9;--ui-fog:#f5f5f5;--ui-hair:#f0f0f0;--ui-div:#e8e8e8;--ui-card:#d9d9d9;--ui-input:#d4d7d9;--ui-ctl:#cccccc;--ui-float:0 8px 16px rgba(0,0,0,.1)}
@@ -898,6 +903,7 @@ textarea:focus,.row input:focus,.lbox input:focus,select:focus{outline:none;bord
 <div class="app">
   <div class="top">
     <h1>스포츠 카드뉴스 제작기</h1>
+    <button class="wzbtn inst" id="instBtn" style="display:none">앱 설치</button>
     <button class="wzbtn" id="wzBtn" aria-haspopup="true" aria-expanded="false"><span id="wzCur">1 주제</span> <span class="car">▾</span></button>
     <nav class="wz" id="wz"><!-- 단계 메뉴 --><button data-go="1">1 주제</button><button data-go="2">2 제미나이</button><button data-go="3">3 원고</button><button data-go="4">4 발행호</button><button data-go="5">5 디자인</button><button data-go="6">6 저장</button><button data-go="7">7 인스타</button><button class="acm" id="acctMenu">구글 계정 바꾸기</button></nav>
   </div>
@@ -1042,6 +1048,12 @@ textarea:focus,.row input:focus,.lbox input:focus,select:focus{outline:none;bord
   <div class="wzf"><button class="btn" id="wzPrev">이전</button><span id="wzPos" class="hint"></span><button class="btn pri" id="wzNext">다음</button></div>
 </div>
 <div id="stage"></div>
+<div class="cpop" id="instPop"><div class="cpbox"><h3>앱으로 설치하기</h3>
+<p class="hint" style="margin:0">설치하면 바탕화면이나 시작 메뉴, 휴대폰 홈 화면에 아이콘이 생기고, 주소창 없이 앱 창으로 열려요.</p>
+<h4>컴퓨터(크롬, 엣지)</h4><ol><li>주소창 오른쪽 끝의 설치 아이콘(모니터에 화살표)을 눌러요.</li><li>없으면 오른쪽 위 ⋮ 메뉴 → "앱 설치" 또는 "카드뉴스 설치"를 눌러요.</li></ol>
+<h4>안드로이드(크롬)</h4><ol><li>오른쪽 위 ⋮ 메뉴 → "홈 화면에 추가" 또는 "앱 설치"를 눌러요.</li></ol>
+<h4>아이폰, 아이패드(사파리)</h4><ol><li>아래 공유 버튼(네모에 화살표)을 눌러요.</li><li>"홈 화면에 추가"를 눌러요.</li></ol>
+<div class="row"><button class="btn pri" id="instClose">알겠어요</button></div></div></div>
 <div id="toast"></div>
 <div id="login" class="login" style="display:none" role="dialog" aria-modal="true" aria-labelledby="loginT"><div class="lbox">
   <h1 id="loginT">카드뉴스 제작기</h1>
@@ -2953,6 +2965,21 @@ function stSave(){
 })();
 /* ===== 붙여넣기 / 지우기 버튼 ===== */
 var TOAST_T=0;
+// 앱 설치: 크롬/엣지는 설치 창을 바로 띄우고, 그 밖의 브라우저는 설치 방법을 보여 준다. 이미 앱으로 열었으면 버튼을 숨긴다
+(function(){
+ var ev=null,b=$('instBtn');
+ function standalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}
+ function show(){b.style.display=(standalone()||!/^https?:$/.test(location.protocol))?'none':''}
+ addEventListener('beforeinstallprompt',function(e){e.preventDefault();ev=e;show()});
+ addEventListener('appinstalled',function(){ev=null;b.style.display='none';toast('앱으로 설치했어요. 바탕화면이나 시작 메뉴에서 열어 보세요.')});
+ b.onclick=function(){
+  if(ev){var p=ev;ev=null;p.prompt();p.userChoice.then(function(c){if(c.outcome!=='accepted'){ev=p}}).catch(function(){})}
+  else $('instPop').classList.add('on');
+ };
+ $('instClose').onclick=function(){$('instPop').classList.remove('on')};
+ $('instPop').onclick=function(e){if(e.target===this)this.classList.remove('on')};
+ show();
+})();
 function toast(t){var e=$('toast');e.textContent=t;e.classList.add('on');clearTimeout(TOAST_T);TOAST_T=setTimeout(function(){e.classList.remove('on')},2600)}
 function fieldSet(el,v){el.value=v;el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}
 document.addEventListener('click',function(e){
