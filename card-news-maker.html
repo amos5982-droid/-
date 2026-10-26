@@ -2968,7 +2968,7 @@ var TOAST_T=0;
 // 앱 설치: 크롬/엣지는 설치 창을 바로 띄우고, 그 밖의 브라우저는 설치 방법을 보여 준다. 이미 앱으로 열었으면 버튼을 숨긴다
 (function(){
  var ev=null,b=$('instBtn');
- function standalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}
+ function standalone(){return matchMedia('(display-mode: standalone)').matches||navigator.standalone===true||/; wv\)/.test(navigator.userAgent)}
  function show(){b.style.display=(standalone()||!/^https?:$/.test(location.protocol))?'none':''}
  addEventListener('beforeinstallprompt',function(e){e.preventDefault();ev=e;show()});
  addEventListener('appinstalled',function(){ev=null;b.style.display='none';toast('앱으로 설치했어요. 바탕화면이나 시작 메뉴에서 열어 보세요.')});
