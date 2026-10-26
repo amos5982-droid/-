@@ -1,6 +1,6 @@
 /* 오프라인에서도 열리도록 앱 파일을 저장해 두고, 인터넷이 되면 새 버전으로 바꿔 둔다 */
 /* 같은 주소의 경제판(economy/) 저장분은 건드리지 않게, 이름이 cardnews-로 시작하는 것만 정리한다 */
-var CACHE = 'cardnews-v15';
+var CACHE = 'cardnews-v16';
 var FILES = ['./', './card-news-maker.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png'];
 
 self.addEventListener('install', function (e) {

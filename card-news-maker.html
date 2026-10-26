@@ -4,10 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>스포츠 카드뉴스 제작기</title>
-<meta name="theme-color" content="#0e0f14">
+<meta name="theme-color" content="#ffffff">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="카드뉴스">
 <script>
 /* 앱으로 설치: 웹 주소(https)로 열었을 때만 앱 정보와 오프라인 저장을 켠다. 파일로 열면 그대로 동작한다 */
@@ -791,6 +792,105 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
 #zoom .bar2{display:flex;gap:10px;align-items:center;color:#c5c8da;font-size:14px}
 #zoom .bar2 button{font:inherit;font-weight:700;border:1px solid #3a3e55;background:#20233a;color:#e8e9f0;border-radius:10px;padding:8px 16px;cursor:pointer}
 </style>
+<style id="uiTheme">
+/* ===== 제작기 화면 디자인: DESIGN-dji.md (흰 바탕, 잉크색 글자, 파란 알약 버튼 하나, 그림자는 떠 있는 것에만). 카드(1080x1350)에는 쓰지 않는다 ===== */
+:root{--ui-blue:#0070d5;--ui-blue2:#0060ef;--ui-tint:#deeafd;--ui-link:#1890ff;--ui-orange:#be4e04;--ui-err:#f5222d;--ui-ink:#262626;--ui-ink2:#595959;--ui-ink3:#8c8c8c;--ui-soft:#f7f9fa;--ui-panel:#f6f8f9;--ui-fog:#f5f5f5;--ui-hair:#f0f0f0;--ui-div:#e8e8e8;--ui-card:#d9d9d9;--ui-input:#d4d7d9;--ui-ctl:#cccccc;--ui-float:0 8px 16px rgba(0,0,0,.1)}
+body{background:#fff;color:var(--ui-ink);font-family:'Open Sans','Paperlogy','Noto Sans KR',system-ui,sans-serif;letter-spacing:-.02em;line-height:1.5}
+.app h1,.lbox h1{font-size:32px;font-weight:600;letter-spacing:-.03em;line-height:1.25;color:var(--ui-ink)}
+.app .sub:not(:where(#stage,.pv,#zoom,.savel) *),.lbox .sub{color:var(--ui-ink2);font-size:16px}
+.step{background:#fff;border:1px solid var(--ui-card);border-radius:8px;padding:24px;box-shadow:none}
+.step h2{font-size:20px;font-weight:600;letter-spacing:-.03em}
+.step h2 i{background:var(--ui-ink);color:#fff;font-weight:600;font-size:13px}
+.step p.d,.hint,.pvw small{color:var(--ui-ink2)}
+.step h3,.histb h3,.teamb h3,.dzb h3,.cpbox h3{font-weight:600;letter-spacing:-.03em}
+.dzb summary,.gapi summary,.fixd summary,.igd summary{font-weight:600;color:var(--ui-ink)}
+/* 카드가 놓이는 곳은 예전 글꼴, 간격, 글자색을 그대로 물려받게 한다(카드 이미지가 바뀌지 않게) */
+:where(#stage,.pv,#zoom .box,.savel){font-family:'Paperlogy','Noto Sans KR',system-ui,sans-serif;letter-spacing:normal;line-height:1.55;color:#e8e9f0}
+/* 버튼: 주 버튼은 파란 알약, 나머지는 잉크색 1px 테두리 알약 */
+.tabs button,.btn,.wzbtn,#zoom .bar2 button{font-weight:500;font-size:14px;letter-spacing:-.02em;background:#fff;color:var(--ui-ink);border:1px solid var(--ui-ink);border-radius:9999px;min-height:40px;padding:8px 20px;filter:none;transition:background .15s,color .15s,border-color .15s}
+.btn:hover,.tabs button:hover,.wzbtn:hover,#zoom .bar2 button:hover{filter:none;background:var(--ui-fog)}
+.btn.pri{background:var(--ui-blue);border-color:var(--ui-blue);color:#fff}
+.btn.pri:hover{background:var(--ui-blue2);border-color:var(--ui-blue2)}
+.tabs button.on{background:var(--ui-ink);border-color:var(--ui-ink);color:#fff}
+.btn[disabled]{opacity:1;background:var(--ui-fog);border-color:var(--ui-ctl);color:var(--ui-ink3)}
+.btn[disabled].pri{background:var(--ui-tint);border-color:var(--ui-tint);color:var(--ui-ink3)}
+.btn:focus-visible,.tabs button:focus-visible,.wzbtn:focus-visible,.mini:not(:where(#stage,.pv,#zoom,.savel) *):focus-visible,.lang button:focus-visible{outline:2px solid var(--ui-blue2);outline-offset:2px}
+.mini:not(:where(#stage,.pv,#zoom,.savel) *){font-weight:500;background:#fff;color:var(--ui-ink);border:1px solid var(--ui-ctl);border-radius:9999px;padding:6px 12px}
+.mini:not(:where(#stage,.pv,#zoom,.savel) *):hover{filter:none;border-color:var(--ui-ink)}
+.lnk{color:var(--ui-blue);text-decoration:none;font-weight:500}
+.lnk:hover{text-decoration:underline}
+/* 국문/영문 전환 */
+.lang{background:var(--ui-fog);border:0;padding:4px}
+.lang button{color:var(--ui-ink2);font-weight:500}
+.lang button.on{background:#fff;color:var(--ui-ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+/* 입력칸 */
+.row input[type=password]{background:#fff;color:var(--ui-ink);border:1px solid var(--ui-input);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px;max-width:100%}
+.row label:has(input[type=checkbox]){white-space:normal;align-items:flex-start}
+.row label input[type=checkbox]{accent-color:var(--ui-blue);margin-top:5px;flex:none}
+textarea,.row input[type=text],.row input[type=number],.row select,select,.lbox input{background:#fff;color:var(--ui-ink);border:1px solid var(--ui-input);border-radius:8px;letter-spacing:normal}
+.row select,select{padding:8px 10px;font:inherit;font-size:14px}
+textarea:focus,.row input:focus,.lbox input:focus,select:focus{outline:none;border-color:var(--ui-blue2);box-shadow:0 0 0 2px var(--ui-tint)}
+.row label,.lbox label{color:var(--ui-ink2)}
+.row input.hex.bad,.lbox input.bad{border-color:var(--ui-err)}
+.row input[type=color]{background:#fff;border-color:var(--ui-input)}
+.chips button,.swb{border-color:var(--ui-card)}
+#thImg{background:var(--ui-fog)}
+/* 상자들: 옅은 회색 면, 그림자 없음 */
+.enh,.histb{background:var(--ui-soft);border:1px solid var(--ui-div);border-radius:8px}
+#teamDraft{border-color:var(--ui-blue)!important;background:#fff}
+.fixd,.gapi{border:1px solid var(--ui-card);border-radius:8px}
+.fixd summary{color:#237804}
+.fixd.bad{border-color:var(--ui-err)}
+.fixd.bad summary{color:var(--ui-err)}
+.teamb,.dzb,.hli{border-color:var(--ui-div)}
+.hli small{color:var(--ui-ink3)}
+.hli .hdel{color:var(--ui-ink3)}
+.hli .hdel:hover{color:var(--ui-err)}
+.drop{border:1px dashed var(--ui-ctl);border-radius:8px;background:var(--ui-soft);color:var(--ui-ink2)}
+.drop b{color:var(--ui-ink)}
+.drop.ov{border-color:var(--ui-blue);background:var(--ui-tint);color:var(--ui-ink)}
+/* 알림 줄 */
+#msgs div{border-radius:8px;border:1px solid transparent}
+#msgs .err{background:#fff1f0;border-color:#ffccc7;color:#a8071a}
+#msgs .warn{background:#fff7e6;border-color:#ffd591;color:var(--ui-orange)}
+#msgs .ok{background:#f6ffed;border-color:#b7eb8f;color:#237804}
+#msgs .info{background:#e6f4ff;border-color:#bae0ff;color:#003eb3}
+.pvw small.bad{color:var(--ui-err)}
+.pvw small.sp{color:var(--ui-orange)}
+.pv{background:var(--ui-fog);border-radius:0;outline:1px solid var(--ui-div)}
+/* 미리보기, 저장 목록 */
+.savel .sv{color:var(--ui-ink)}
+.savel .sv img{border:1px solid var(--ui-div);border-radius:0}
+.savel .sv span{background:#fff;border:1px solid var(--ui-ink);border-radius:9999px}
+/* 떠 있는 것: 단계 메뉴, 알림, 색 고르기 */
+.wz{background:#fff;border:1px solid var(--ui-div);border-radius:8px;box-shadow:var(--ui-float)}
+.wz button{color:var(--ui-ink);font-weight:500;border-radius:8px}
+.wz button:hover{background:var(--ui-fog)}
+.wz button.on{background:var(--ui-tint);color:var(--ui-blue2);font-weight:600}
+.wz button.acm{border-top-color:var(--ui-div);color:var(--ui-ink2);border-radius:0 0 8px 8px}
+#toast{background:var(--ui-ink);color:#fff;border:0;border-radius:9999px;padding:10px 20px;box-shadow:var(--ui-float)}
+.cpop{background:rgba(38,38,38,.45)}
+.cpbox{background:#fff;border:0;box-shadow:var(--ui-float);color:var(--ui-ink)}
+.cpbox h4{color:var(--ui-ink2);font-weight:600}
+.cpg button{border-color:var(--ui-div)}
+.cpg button.on{border-color:var(--ui-blue2);box-shadow:0 0 0 2px var(--ui-blue2)}
+@media (min-width:721px){.cpbox{border-radius:8px}}
+#zoom{background:rgba(38,38,38,.92)}
+#zoom .box{border-radius:0;box-shadow:var(--ui-float)}
+#zoom .bar2{color:#fff}
+/* 시작 화면 */
+.login{background:var(--ui-soft)}
+.lbox{background:#fff;border:1px solid var(--ui-card);border-radius:8px;padding:32px 24px 24px}
+.lbox h1{font-size:24px}
+.lbox .btn{min-height:48px;font-size:16px}
+.lbox .btn.pri{background:var(--ui-blue2);border-color:var(--ui-blue2)}
+@media (max-width:720px){
+ .app h1{font-size:24px}
+ .app .sub:not(:where(#stage,.pv,#zoom,.savel) *){font-size:14px}
+ .step{padding:16px 14px;border-radius:8px}
+ .step h2{font-size:18px}
+}
+</style>
 </head>
 <body>
 <div class="app">
@@ -810,7 +910,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <p class="d">카드 종류와 이번 호에서 다룰 종목(또는 주제)을 넣어요. 지난 호 소재는 발행 기록에서 자동으로 채워져요.</p>
     <p class="hint acl" style="margin:0 0 12px">구글 계정: <b id="acctNow"></b> <button class="lnk" id="acctChange">바꾸기</button></p>
     <div class="row" style="margin:0">
-      <label>카드 종류 <select id="ctype" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label>
+      <label>카드 종류 <select id="ctype"><option value="sp">종목 카드뉴스</option><option value="biz">스포츠 비즈니스 트렌드</option></select></label>
       <label><span id="lblSubj">종목</span> <input type="text" id="sport" placeholder="예: 야구" style="width:190px"><span class="pc"><button class="mini" data-paste="sport">붙여넣기</button><button class="mini" data-clear="sport">지우기</button></span></label>
       <label>지난 호 소재 <input type="text" id="past" style="width:520px;max-width:100%" title="발행 기록에서 바로 직전 호를 자동으로 채워요. 여기서 고치면 이번 프롬프트에만 쓰여요."><span class="pc"><button class="mini" data-paste="past">붙여넣기</button><button class="mini" data-clear="past">지우기</button></span></label>
     </div>
@@ -830,7 +930,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
     <details class="gapi" id="gApi"><summary>제미나이 자동 실행 설정(API 키)</summary>
       <p class="hint" style="margin:8px 0 0">Google AI Studio에서 받은 API 키를 넣으면 앱이 직접 제미나이에 보내고, 받은 원고로 카드를 만들어요. 키는 이 기기에만 저장되고 다른 곳으로 보내지 않아요(제미나이 API에만 써요). 국문 원고 만들기는 구글 검색을 써야 해서, 검색 기능이 열린(결제 설정한) 키가 필요해요. 영문 번역과 글 고치기는 무료 키로도 돼요.</p>
       <div class="row"><label>API 키 <input type="password" id="gKey" autocomplete="off" spellcheck="false" placeholder="키를 붙여 넣으세요" style="width:260px"></label><button class="btn" id="gKeySave">저장</button><button class="btn" id="gKeyDel">키 지우기</button></div>
-      <div class="row"><label>모델 <select id="gModel" style="background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;border-radius:8px;padding:8px 10px;font:inherit;font-size:14px"><option value="gemini-flash-latest">Gemini Flash 최신(빠름, 기본)</option><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-pro-latest">Gemini Pro 최신(꼼꼼함, 한도 적음)</option></select></label><label><input type="checkbox" id="gAutoFix" checked> 고칠 것이 있으면 자동으로 고치기(붙여 넣은 원고도, 최대 2번)</label></div>
+      <div class="row"><label>모델 <select id="gModel"><option value="gemini-flash-latest">Gemini Flash 최신(빠름, 기본)</option><option value="gemini-3.8-flash">Gemini 3.8 Flash</option><option value="gemini-pro-latest">Gemini Pro 최신(꼼꼼함, 한도 적음)</option></select></label><label><input type="checkbox" id="gAutoFix" checked> 고칠 것이 있으면 자동으로 고치기(붙여 넣은 원고도, 최대 2번)</label></div>
       <p class="hint" id="gKeyMsg" style="margin:0"></p>
     </details>
   </div>
@@ -838,7 +938,7 @@ textarea{width:100%;background:#0e0f14;color:#e8e9f0;border:1px solid #2a2d3d;bo
   <div class="step" data-st="3">
     <h2><i>3</i>원고 붙여 넣기</h2>
     <div class="lang" id="langT"><button data-l="ko" class="on">국문</button><button data-l="en">영문</button></div>
-    <div id="teamDraft" class="enh" style="display:none;border-color:#ffc53d"></div>
+    <div id="teamDraft" class="enh" style="display:none"></div>
     <div id="enHelp" class="enh" style="display:none">
       <p>영문판은 국문 원고를 영어로 옮겨 만들어요. 버튼을 누르면 국문 원고가 들어간 프롬프트가 복사되고 제미나이가 열려요. 받은 영문 JSON을 아래 칸에 붙여 넣으세요.</p>
       <div class="row" style="margin-top:8px"><button class="btn pri" id="gEn">영문판 자동 만들기</button><button class="btn" id="enCopyG">영문판 프롬프트 복사하고 제미나이 열기</button><button class="btn" id="enCopy">복사만</button></div>
