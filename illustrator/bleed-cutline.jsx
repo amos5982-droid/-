@@ -370,6 +370,7 @@
     var skipTxt = "";
     for (var key in stats.skipped) skipTxt += "\n  - " + key + " " + stats.skipped[key] + "개 (늘리지 않음)";
     alert("완료\n칼선 조각: " + stats.cutPieces + "개" +
+        (stats.cutPieces > 1 ? " (하나로 합쳐지지 않았습니다. 겹치지 않는 조각이나 합치기 실패가 있는지 칼선 레이어를 확인하세요)" : " (하나로 통합됨)") +
         "\n도련으로 늘린 도형: " + stats.paths + "개, 이미지: " + stats.images + "개" +
         (stats.traced ? "\n이미지 윤곽 추적: " + stats.traced + "개" : "") +
         (stats.imageRects ? "\n사각형 경계로 칼선을 딴 이미지·기타: " + stats.imageRects + "개" : "") +
