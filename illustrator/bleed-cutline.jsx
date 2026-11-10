@@ -17,7 +17,8 @@
         cutLayerName: "칼선",     // 칼선 레이어 이름
         cutStrokePt: 0.5,        // 칼선 두께(pt)
         cutOffsetMM: 0,          // 칼선을 바깥(+)/안쪽(-)으로 옮길 mm. 0이면 외곽 그대로
-        removeInnerHoles: false, // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
+        removeInnerHoles: true,  // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
+        traceImages: true,       // true면 사진(이미지)을 이미지 추적으로 투명 배경 윤곽대로 땀. false면 사각형
         outlineStrokes: false,   // true면 선(stroke) 두께까지 윤곽에 포함 (실험적)
         saveCopy: true,          // 끝나면 _도련칼선.ai 복사본으로 저장
         edgeTolPt: 0.5           // 아트보드 가장자리로 볼 허용 오차(pt)
@@ -41,7 +42,7 @@
         "mm와 칼선을 만듭니다.\n원본 파일은 저장하지 않고, 끝나면 복사본으로 저장합니다.\n진행할까요?")) return;
 
     var restore = [];   // 잠금 상태 복원용
-    var stats = { paths: 0, images: 0, skipped: {}, cutPieces: 0, imageRects: 0 };
+    var stats = { paths: 0, images: 0, skipped: {}, cutPieces: 0, imageRects: 0, traced: 0 };
 
     function bump(name) { stats.skipped[name] = (stats.skipped[name] || 0) + 1; }
     function unlock(obj) {
@@ -108,6 +109,50 @@
         p.filled = true; p.fillColor = blackColor; p.stroked = false;
         return p;
     }
+    function isFullRect(p, gb) {
+        if (p.typename !== "PathItem" || p.pathPoints.length > 5) return false;
+        var b = p.geometricBounds;
+        return Math.abs(b[0] - gb[0]) < 1 && Math.abs(b[1] - gb[1]) < 1 &&
+            Math.abs(b[2] - gb[2]) < 1 && Math.abs(b[3] - gb[3]) < 1;
+    }
+    // 이미지 추적으로 투명하지 않은 부분의 윤곽 도형들을 얻는다. 실패하면 null.
+    function traceSilhouette(item, gb) {
+        var d = null;
+        try {
+            d = item.duplicate(cutLayer, ElementPlacement.PLACEATEND);
+            var tr = d.trace();
+            var o = tr.tracing.tracingOptions;
+            o.tracingMode = TracingModeType.TRACINGMODECOLOR;
+            try { o.fills = true; o.strokes = false; o.ignoreWhite = false; } catch (e1) {}
+            try { o.pathFidelity = 50; o.cornerAngle = 20; o.minimumArea = 10; } catch (e2) {}
+            app.redraw();
+            var grp = tr.tracing.expandTracing();
+            var kids = [], res = [], i;
+            for (i = 0; i < grp.pageItems.length; i++) kids.push(grp.pageItems[i]);
+            for (i = 0; i < kids.length; i++) {
+                if (isFullRect(kids[i], gb)) continue; // 투명 배경이 흰 사각형으로 잡힌 경우 버림
+                kids[i].move(cutLayer, ElementPlacement.PLACEATEND);
+                res.push(kids[i]);
+            }
+            grp.remove();
+            if (res.length === 0) return null;
+            return res;
+        } catch (e) {
+            try { if (d) d.remove(); } catch (e3) {}
+            return null;
+        }
+    }
+    function hasImageInsideClip(group, clip) {
+        var cb = clip.geometricBounds, found = false;
+        for (var i = 0; i < group.pageItems.length; i++) {
+            var c = group.pageItems[i];
+            if (c.typename !== "RasterItem" && c.typename !== "PlacedItem") continue;
+            found = true;
+            var b = c.geometricBounds;
+            if (b[0] < cb[0] - 1 || b[1] > cb[1] + 1 || b[2] > cb[2] + 1 || b[3] < cb[3] - 1) return false;
+        }
+        return found;
+    }
     function addShapes(item, out) {
         if (item.hidden) return;
         var gb;
@@ -130,6 +175,7 @@
             out.push(d);
         } else if (t === "GroupItem") {
             var clip = findClip(item);
+            if (clip && CONFIG.traceImages && hasImageInsideClip(item, clip)) clip = null; // 이미지가 마스크 안에 다 들어 있으면 이미지 윤곽을 씀
             if (clip) {
                 d = clip.duplicate(cutLayer, ElementPlacement.PLACEATEND);
                 try {
@@ -152,9 +198,16 @@
             d = item.duplicate(cutLayer, ElementPlacement.PLACEATEND);
             out.push(d.createOutline());
         } else {
-            // 이미지 등: 경계 사각형으로 대신한다
-            out.push(addRect(gb));
-            stats.imageRects++;
+            // 이미지: 추적으로 윤곽을 따고, 안 되면 경계 사각형으로 대신한다
+            var isImg = (t === "RasterItem" || t === "PlacedItem");
+            var traced = (isImg && CONFIG.traceImages) ? traceSilhouette(item, gb) : null;
+            if (traced) {
+                for (i = 0; i < traced.length; i++) out.push(traced[i]);
+                stats.traced++;
+            } else {
+                out.push(addRect(gb));
+                stats.imageRects++;
+            }
         }
     }
     function allPaths(item, out) {
@@ -312,7 +365,8 @@
     for (var key in stats.skipped) skipTxt += "\n  - " + key + " " + stats.skipped[key] + "개 (늘리지 않음)";
     alert("완료\n칼선 조각: " + stats.cutPieces + "개" +
         "\n도련으로 늘린 도형: " + stats.paths + "개, 이미지: " + stats.images + "개" +
-        (stats.imageRects ? "\n이미지·기타는 사각형 경계로 칼선을 땄습니다: " + stats.imageRects + "개" : "") +
+        (stats.traced ? "\n이미지 윤곽 추적: " + stats.traced + "개" : "") +
+        (stats.imageRects ? "\n사각형 경계로 칼선을 딴 이미지·기타: " + stats.imageRects + "개" : "") +
         skipTxt + savedMsg +
         "\n\n도련 부분이 자연스러운지 눈으로 꼭 확인하세요.");
 })();
