@@ -2,27 +2,30 @@
 /*
   도련 3mm + 아트워크 외곽 칼선 만들기 (Adobe Illustrator 스크립트)
 
-  하는 일
+  도련은 "칼선 바깥으로 3mm 더 인쇄해 두는 것"이다. 이 스크립트는
    1) 아트워크 바깥 윤곽을 따서 "칼선" 레이어(마젠타 선)를 맨 위에 만든다.
-   2) 아트보드가 닿는 가장자리의 도형·이미지를 3mm 바깥으로 늘리고,
-      아트보드를 사방 3mm 키운다. 기존 레이어 구조는 그대로 둔다.
-   3) 원본은 건드리지 않고 "원본이름_도련칼선.ai" 복사본으로 저장한다.
+   2) 클리핑 마스크로 묶인 배경(예: 파란 사각형)은 마스크와 안쪽 이미지를 3mm 바깥으로 키운다.
+   3) 그 밖의 아트워크(예: 선수 사진의 흰 테두리)는 윤곽을 3mm 부풀린 흰색 도형을 만들어
+      맨 아래 "도련_흰색" 레이어에 둔다. 마스크 배경 위쪽 부분은 배경에 가려져서 바깥 부분만 보인다.
+   4) 아트보드를 도련이 들어가게 키우고, 원본은 두고 "원본이름_도련칼선.ai" 복사본으로 저장한다.
+  기존 레이어와 개체는 지우거나 합치지 않는다.
 
   사용법: 파일 > 스크립트 > 기타 스크립트... 에서 이 파일을 선택.
-  작업 대상은 현재 선택된(활성) 아트보드 하나다.
 */
 (function () {
     var CONFIG = {
-        bleedMM: 3,              // 도련 크기(mm)
-        cutLayerName: "칼선",     // 칼선 레이어 이름
-        cutStrokePt: 0.5,        // 칼선 두께(pt)
-        cutOffsetMM: 0,          // 칼선을 바깥(+)/안쪽(-)으로 옮길 mm. 0이면 외곽 그대로
-        removeInnerHoles: true,  // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
-        cutSourceLayers: [],     // 칼선을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어. 예: ["흰테두리", "파란배경"]
-        traceImages: true,       // true면 사진(이미지)을 이미지 추적으로 투명 배경 윤곽대로 땀. false면 사각형
-        outlineStrokes: false,   // true면 선(stroke) 두께까지 윤곽에 포함 (실험적)
-        saveCopy: true,          // 끝나면 _도련칼선.ai 복사본으로 저장
-        edgeTolPt: 0.5           // 아트보드 가장자리로 볼 허용 오차(pt)
+        bleedMM: 3,                    // 도련 크기(mm)
+        cutLayerName: "칼선",           // 칼선 레이어 이름
+        cutStrokePt: 0.5,              // 칼선 두께(pt)
+        cutOffsetMM: 0,                // 칼선을 바깥(+)/안쪽(-)으로 옮길 mm. 0이면 외곽 그대로
+        cutSourceLayers: [],           // 칼선과 도련을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어
+        whiteBleedLayerName: "도련_흰색", // 흰색 도련 도형을 담을 레이어 이름
+        whiteBleedSourceLayers: [],    // 흰색 도련으로 부풀릴 레이어 이름들. 비우면 위 레이어에서 마스크 묶음을 뺀 나머지
+        removeInnerHoles: true,        // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
+        traceImages: true,             // true면 사진을 이미지 추적으로 투명 배경 윤곽대로 땀. false면 사각형
+        outlineStrokes: false,         // true면 선(stroke) 두께까지 윤곽에 포함 (실험적)
+        saveCopy: true,                // 끝나면 _도련칼선.ai 복사본으로 저장
+        edgeTolPt: 0.5                 // 가장자리로 볼 허용 오차(pt)
     };
 
     var MM = 72 / 25.4;
@@ -35,15 +38,14 @@
     var ab = doc.artboards[doc.artboards.getActiveArtboardIndex()];
     var rect = ab.artboardRect;
     var yUp = rect[1] >= rect[3];
-    var L = rect[0], R = rect[2];
-    var T = Math.max(rect[1], rect[3]), B = Math.min(rect[1], rect[3]);
+    var AL = rect[0], AR = rect[2];
+    var AT = Math.max(rect[1], rect[3]), AB = Math.min(rect[1], rect[3]);
 
-    var wmm = Math.round((R - L) / MM * 10) / 10, hmm = Math.round((T - B) / MM * 10) / 10;
-    if (!confirm("아트보드 " + wmm + " x " + hmm + " mm 에 도련 " + CONFIG.bleedMM +
-        "mm와 칼선을 만듭니다.\n원본 파일은 저장하지 않고, 끝나면 복사본으로 저장합니다.\n진행할까요?")) return;
+    if (!confirm("도련 " + CONFIG.bleedMM + "mm와 칼선을 만듭니다.\n" +
+        "원본 파일은 저장하지 않고, 끝나면 복사본으로 저장합니다.\n진행할까요?")) return;
 
-    var restore = [];   // 잠금 상태 복원용
-    var stats = { paths: 0, images: 0, skipped: {}, cutPieces: 0, imageRects: 0, traced: 0 };
+    var restore = [];
+    var stats = { maskGroups: 0, paths: 0, images: 0, skipped: {}, cutPieces: 0, whitePieces: 0, imageRects: 0, traced: 0 };
 
     function bump(name) { stats.skipped[name] = (stats.skipped[name] || 0) + 1; }
     function unlock(obj) {
@@ -62,8 +64,9 @@
     function makeColor(c, m, y, k) {
         if (doc.documentColorSpace === DocumentColorSpace.RGB) {
             var rgb = new RGBColor();
-            // 마젠타, 검정을 RGB로 근사
-            rgb.red = k === 100 ? 0 : 255; rgb.green = k === 100 ? 0 : 0; rgb.blue = k === 100 ? 0 : 255;
+            rgb.red = 255 * (1 - c / 100) * (1 - k / 100);
+            rgb.green = 255 * (1 - m / 100) * (1 - k / 100);
+            rgb.blue = 255 * (1 - y / 100) * (1 - k / 100);
             return rgb;
         }
         var cm = new CMYKColor();
@@ -84,24 +87,22 @@
         }
         return out;
     }
-    function hitsArtboard(gb) {
-        return !(gb[2] < L || gb[0] > R || gb[1] < B || gb[3] > T);
+    function allPaths(item, out) {
+        var t = item.typename, i;
+        if (t === "PathItem") out.push(item);
+        else if (t === "CompoundPathItem") { for (i = 0; i < item.pathItems.length; i++) out.push(item.pathItems[i]); }
+        else if (t === "GroupItem") { for (i = 0; i < item.pageItems.length; i++) allPaths(item.pageItems[i], out); }
+        return out;
     }
-
-    // ---------- 1. 칼선 ----------
-    var old = null;
-    try { old = doc.layers.getByName(CONFIG.cutLayerName); } catch (e) {}
-    if (old) {
-        if (!confirm("'" + CONFIG.cutLayerName + "' 레이어가 이미 있습니다. 지우고 새로 만들까요?")) return;
-        old.locked = false; old.visible = true; old.remove();
+    function layerPaths(layer) {
+        var res = [];
+        for (var c = 0; c < layer.pageItems.length; c++) allPaths(layer.pageItems[c], res);
+        return res;
     }
-    unlockLayers(doc);
-
-    var cutLayer = doc.layers.add();
-    cutLayer.name = CONFIG.cutLayerName;
-    var blackColor = makeColor(0, 0, 0, 100);
-    var needOutline = false;
-
+    function bboxContains(a, b) { // a가 b를 완전히 감싸는가 (gb: l,t,r,b)
+        return a[0] <= b[0] && a[1] >= b[1] && a[2] >= b[2] && a[3] <= b[3] &&
+            ((a[2] - a[0]) * (a[1] - a[3]) > (b[2] - b[0]) * (b[1] - b[3]));
+    }
     function findClip(group) {
         for (var i = 0; i < group.pageItems.length; i++) {
             var c = group.pageItems[i];
@@ -110,8 +111,17 @@
         }
         return null;
     }
+
+    // ---------- 윤곽 만들기 ----------
+    var workLayer = null;      // 복제본을 모아 합칠 레이어
+    var needOutline = false;
+    var skipClipped = false;   // true면 클리핑 마스크 묶음은 건너뜀
+
+    function hitsArtboard(gb) {
+        return !(gb[2] < AL || gb[0] > AR || gb[1] < AB || gb[3] > AT);
+    }
     function addRect(gb) {
-        var p = cutLayer.pathItems.rectangle(gb[1], gb[0], gb[2] - gb[0], gb[1] - gb[3]);
+        var p = workLayer.pathItems.rectangle(gb[1], gb[0], gb[2] - gb[0], gb[1] - gb[3]);
         p.filled = true; p.fillColor = blackColor; p.stroked = false;
         return p;
     }
@@ -125,7 +135,7 @@
     function traceSilhouette(item, gb) {
         var d = null;
         try {
-            d = item.duplicate(cutLayer, ElementPlacement.PLACEATEND);
+            d = item.duplicate(workLayer, ElementPlacement.PLACEATEND);
             var tr = d.trace();
             var o = tr.tracing.tracingOptions;
             o.tracingMode = TracingModeType.TRACINGMODECOLOR;
@@ -137,7 +147,7 @@
             for (i = 0; i < grp.pageItems.length; i++) kids.push(grp.pageItems[i]);
             for (i = 0; i < kids.length; i++) {
                 if (isFullRect(kids[i], gb)) continue; // 투명 배경이 흰 사각형으로 잡힌 경우 버림
-                kids[i].move(cutLayer, ElementPlacement.PLACEATEND);
+                kids[i].move(workLayer, ElementPlacement.PLACEATEND);
                 res.push(kids[i]);
             }
             grp.remove();
@@ -169,21 +179,22 @@
 
         if (t === "PathItem") {
             if (item.guides || item.clipping) return;
-            d = item.duplicate(cutLayer, ElementPlacement.PLACEATEND);
+            d = item.duplicate(workLayer, ElementPlacement.PLACEATEND);
             if (item.filled || item.closed) { d.filled = true; d.fillColor = blackColor; }
             if (item.stroked) { d.strokeColor = blackColor; needOutline = true; }
             out.push(d);
         } else if (t === "CompoundPathItem") {
-            d = item.duplicate(cutLayer, ElementPlacement.PLACEATEND);
+            d = item.duplicate(workLayer, ElementPlacement.PLACEATEND);
             for (i = 0; i < d.pathItems.length; i++) {
                 d.pathItems[i].filled = true; d.pathItems[i].fillColor = blackColor;
             }
             out.push(d);
         } else if (t === "GroupItem") {
+            if (skipClipped && item.clipped) return;
             var clip = findClip(item);
-            if (clip && CONFIG.traceImages && hasImageInsideClip(item, clip)) clip = null; // 이미지가 마스크 안에 다 들어 있으면 이미지 윤곽을 씀
+            if (clip && CONFIG.traceImages && hasImageInsideClip(item, clip)) clip = null;
             if (clip) {
-                d = clip.duplicate(cutLayer, ElementPlacement.PLACEATEND);
+                d = clip.duplicate(workLayer, ElementPlacement.PLACEATEND);
                 try {
                     if (d.typename === "CompoundPathItem") {
                         for (i = 0; i < d.pathItems.length; i++) {
@@ -201,10 +212,9 @@
                 for (i = 0; i < kids.length; i++) addShapes(kids[i], out);
             }
         } else if (t === "TextFrame") {
-            d = item.duplicate(cutLayer, ElementPlacement.PLACEATEND);
+            d = item.duplicate(workLayer, ElementPlacement.PLACEATEND);
             out.push(d.createOutline());
         } else {
-            // 이미지: 추적으로 윤곽을 따고, 안 되면 경계 사각형으로 대신한다
             var isImg = (t === "RasterItem" || t === "PlacedItem");
             var traced = (isImg && CONFIG.traceImages) ? traceSilhouette(item, gb) : null;
             if (traced) {
@@ -216,92 +226,107 @@
             }
         }
     }
-    function allPaths(item, out) {
-        var t = item.typename, i;
-        if (t === "PathItem") out.push(item);
-        else if (t === "CompoundPathItem") { for (i = 0; i < item.pathItems.length; i++) out.push(item.pathItems[i]); }
-        else if (t === "GroupItem") { for (i = 0; i < item.pageItems.length; i++) allPaths(item.pageItems[i], out); }
-        return out;
-    }
-    function bboxContains(a, b) { // a가 b를 완전히 감싸는가 (gb: l,t,r,b)
-        return a[0] <= b[0] && a[1] >= b[1] && a[2] >= b[2] && a[3] <= b[3] &&
-            ((a[2] - a[0]) * (a[1] - a[3]) > (b[2] - b[0]) * (b[1] - b[3]));
+    // items를 복제해서 workLayer에 하나의 바깥 윤곽으로 합친다. 결과 패스 배열을 돌려준다.
+    function makeOutline(items, offsetMM) {
+        needOutline = false;
+        var shapes = [], s, q;
+        for (s = 0; s < items.length; s++) addShapes(items[s], shapes);
+        if (shapes.length === 0) return [];
+
+        if (needOutline && CONFIG.outlineStrokes) {
+            try { doc.selection = null; doc.selection = shapes; app.executeMenuCommand("OffsetPath v22"); } catch (e) {}
+        }
+        if (shapes.length > 1) {
+            try {
+                doc.selection = null;
+                doc.selection = shapes;
+                app.executeMenuCommand("Live Pathfinder Add");
+                app.executeMenuCommand("expandStyle");
+            } catch (e) {
+                alert("도형 합치기(패스파인더)에 실패했습니다: " + e);
+            }
+        }
+        if (offsetMM !== 0) {
+            try {
+                var effect = '<LiveEffect name="Adobe Offset Path"><Dict data="R mlim 4 R ofst ' +
+                    (offsetMM * MM) + ' I jntp 0 "/></LiveEffect>';
+                for (q = 0; q < workLayer.pageItems.length; q++) workLayer.pageItems[q].applyEffect(effect);
+                doc.selection = null;
+                doc.selection = workLayer.pageItems;
+                app.executeMenuCommand("expandStyle");
+            } catch (e) {
+                alert("칼선 간격(오프셋) 적용에 실패했습니다. 레이어에서 개체 > 패스 > 패스 간격 띄우기로 직접 적용하세요.\n" + e);
+            }
+        }
+        var paths = layerPaths(workLayer);
+        if (CONFIG.removeInnerHoles) {
+            var drop = [], a, b2;
+            for (a = 0; a < paths.length; a++) {
+                for (b2 = 0; b2 < paths.length; b2++) {
+                    if (a !== b2 && bboxContains(paths[b2].geometricBounds, paths[a].geometricBounds)) { drop.push(paths[a]); break; }
+                }
+            }
+            for (q = 0; q < drop.length; q++) { try { drop[q].remove(); } catch (e) {} }
+            paths = layerPaths(workLayer);
+        }
+        doc.selection = null;
+        return paths;
     }
 
-    var shapes = [];
+    // ---------- 준비 ----------
+    var old = null;
+    try { old = doc.layers.getByName(CONFIG.cutLayerName); } catch (e) {}
+    if (old) {
+        if (!confirm("'" + CONFIG.cutLayerName + "' 레이어가 이미 있습니다. 지우고 새로 만들까요?")) return;
+        old.locked = false; old.visible = true; old.remove();
+    }
+    var oldW = null;
+    try { oldW = doc.layers.getByName(CONFIG.whiteBleedLayerName); } catch (e) {}
+    if (oldW) { oldW.locked = false; oldW.visible = true; oldW.remove(); }
+    unlockLayers(doc);
+
+    var blackColor = makeColor(0, 0, 0, 100);
+    var cutLayer = doc.layers.add();
+    cutLayer.name = CONFIG.cutLayerName;
+
     var tops = layersTopItems(doc, cutLayer, [], CONFIG.cutSourceLayers, false);
-    for (var s = 0; s < tops.length; s++) addShapes(tops[s], shapes);
+    var whiteItems = (CONFIG.whiteBleedSourceLayers.length > 0)
+        ? layersTopItems(doc, cutLayer, [], CONFIG.whiteBleedSourceLayers, false)
+        : tops;
 
-    if (shapes.length === 0) {
+    // ---------- 1. 칼선 ----------
+    workLayer = cutLayer;
+    skipClipped = false;
+    var cutPaths = makeOutline(tops, CONFIG.cutOffsetMM);
+    if (cutPaths.length === 0) {
         cutLayer.remove();
         relock();
         alert("아트보드 위에서 칼선으로 쓸 아트워크를 찾지 못했습니다.");
         return;
     }
-
-    if (needOutline && CONFIG.outlineStrokes) {
-        try { doc.selection = null; doc.selection = shapes; app.executeMenuCommand("OffsetPath v22"); } catch (e) {}
-    }
-    if (shapes.length > 1) {
-        try {
-            doc.selection = null;
-            doc.selection = shapes;
-            app.executeMenuCommand("Live Pathfinder Add");
-            app.executeMenuCommand("expandStyle");
-        } catch (e) {
-            alert("도형 합치기(패스파인더)에 실패했습니다: " + e);
-        }
-    }
-
-    if (CONFIG.cutOffsetMM !== 0) {
-        try {
-            var effect = '<LiveEffect name="Adobe Offset Path"><Dict data="R mlim 4 R ofst ' +
-                (CONFIG.cutOffsetMM * MM) + ' I jntp 0 "/></LiveEffect>';
-            for (var q = 0; q < cutLayer.pageItems.length; q++) cutLayer.pageItems[q].applyEffect(effect);
-            doc.selection = null;
-            doc.selection = cutLayer.pageItems;
-            app.executeMenuCommand("expandStyle");
-        } catch (e) {
-            alert("칼선 간격(오프셋) 적용에 실패했습니다. 칼선 레이어에서 개체 > 패스 > 패스 간격 띄우기로 직접 적용하세요.\n" + e);
-        }
-    }
-
-    var cutPaths = [];
-    for (var c = 0; c < cutLayer.pageItems.length; c++) allPaths(cutLayer.pageItems[c], cutPaths);
-
-    if (CONFIG.removeInnerHoles) {
-        var drop = [];
-        for (var a = 0; a < cutPaths.length; a++) {
-            for (var b2 = 0; b2 < cutPaths.length; b2++) {
-                if (a !== b2 && bboxContains(cutPaths[b2].geometricBounds, cutPaths[a].geometricBounds)) { drop.push(cutPaths[a]); break; }
-            }
-        }
-        for (var dI = 0; dI < drop.length; dI++) { try { drop[dI].remove(); } catch (e) {} }
-        cutPaths = [];
-        for (c = 0; c < cutLayer.pageItems.length; c++) allPaths(cutLayer.pageItems[c], cutPaths);
-    }
-
     var magenta = makeColor(0, 100, 0, 0);
+    var cl = Infinity, cb = Infinity, cr = -Infinity, ct = -Infinity;
     for (var k = 0; k < cutPaths.length; k++) {
         var cp = cutPaths[k];
         cp.filled = false; cp.stroked = true;
         cp.strokeColor = magenta; cp.strokeWidth = CONFIG.cutStrokePt;
         try { cp.strokeOverprint = false; cp.fillOverprint = false; } catch (e) {}
+        var g = cp.geometricBounds;
+        cl = Math.min(cl, g[0]); ct = Math.max(ct, g[1]); cr = Math.max(cr, g[2]); cb = Math.min(cb, g[3]);
     }
     stats.cutPieces = cutPaths.length;
-    doc.selection = null;
 
-    // ---------- 2. 도련 ----------
-    function extendPath(p) {
+    // ---------- 2. 마스크 배경(파란 사각형 등) 키우기 ----------
+    function extendPath(p, fr) {
         if (p.guides) return;
         var changed = false;
         for (var i = 0; i < p.pathPoints.length; i++) {
             var pt = p.pathPoints[i], an = pt.anchor, ld = pt.leftDirection, rd = pt.rightDirection;
             var dx = 0, dy = 0;
-            if (an[0] <= L + TOL && an[0] > L - BL) dx = (L - BL) - an[0];
-            else if (an[0] >= R - TOL && an[0] < R + BL) dx = (R + BL) - an[0];
-            if (an[1] >= T - TOL && an[1] < T + BL) dy = (T + BL) - an[1];
-            else if (an[1] <= B + TOL && an[1] > B - BL) dy = (B - BL) - an[1];
+            if (an[0] <= fr.L + TOL && an[0] > fr.L - BL) dx = (fr.L - BL) - an[0];
+            else if (an[0] >= fr.R - TOL && an[0] < fr.R + BL) dx = (fr.R + BL) - an[0];
+            if (an[1] >= fr.T - TOL && an[1] < fr.T + BL) dy = (fr.T + BL) - an[1];
+            else if (an[1] <= fr.B + TOL && an[1] > fr.B - BL) dy = (fr.B - BL) - an[1];
             if (dx !== 0 || dy !== 0) {
                 pt.anchor = [an[0] + dx, an[1] + dy];
                 pt.leftDirection = [ld[0] + dx, ld[1] + dy];
@@ -311,46 +336,83 @@
         }
         if (changed) stats.paths++;
     }
-    function extendBox(item) {
+    // 마스크 전체를 덮던 배경 이미지를, 키운 마스크도 덮도록 균일 확대
+    function coverImage(item, fr) {
         var gb = item.geometricBounds, l = gb[0], t = gb[1], r = gb[2], b = gb[3];
-        var nl = l, nt = t, nr = r, nb = b;
-        if (l <= L + TOL && l > L - BL) nl = L - BL;
-        if (r >= R - TOL && r < R + BL) nr = R + BL;
-        if (t >= T - TOL && t < T + BL) nt = T + BL;
-        if (b <= B + TOL && b > B - BL) nb = B - BL;
-        if (nl === l && nt === t && nr === r && nb === b) return;
-        var sx = (nr - nl) / (r - l) * 100, sy = (nt - nb) / (t - b) * 100;
-        item.resize(sx, sy, true, true, true, true, 100, Transformation.CENTER);
-        item.translate(((nl + nr) - (l + r)) / 2, ((nt + nb) - (t + b)) / 2);
+        if (!(l <= fr.L + TOL && r >= fr.R - TOL && t >= fr.T - TOL && b <= fr.B + TOL)) return; // 배경 이미지가 아님
+        var nL = fr.L - BL, nR = fr.R + BL, nT = fr.T + BL, nB = fr.B - BL;
+        if (l <= nL && r >= nR && t >= nT && b <= nB) return; // 이미 충분히 큼
+        var s = Math.max((nR - nL) / (r - l), (nT - nB) / (t - b), 1);
+        item.resize(s * 100, s * 100, true, true, true, true, 100, Transformation.CENTER);
+        gb = item.geometricBounds; l = gb[0]; t = gb[1]; r = gb[2]; b = gb[3];
+        var dx = 0, dy = 0;
+        if (l > nL) dx = nL - l; else if (r < nR) dx = nR - r;
+        if (t < nT) dy = nT - t; else if (b > nB) dy = nB - b;
+        if (dx !== 0 || dy !== 0) item.translate(dx, dy);
         stats.images++;
     }
-    function extendItem(item) {
+    function inflateItem(item, fr) {
         if (item.hidden) return;
-        var gb;
-        try { gb = item.geometricBounds; } catch (e) { return; }
-        if (!hitsArtboard(gb)) return;
         unlock(item);
         var t = item.typename, i;
-        if (t === "PathItem") extendPath(item);
-        else if (t === "CompoundPathItem") { for (i = 0; i < item.pathItems.length; i++) extendPath(item.pathItems[i]); }
+        if (t === "PathItem") extendPath(item, fr);
+        else if (t === "CompoundPathItem") { for (i = 0; i < item.pathItems.length; i++) extendPath(item.pathItems[i], fr); }
         else if (t === "GroupItem") {
             var kids = [];
             for (i = 0; i < item.pageItems.length; i++) kids.push(item.pageItems[i]);
-            for (i = 0; i < kids.length; i++) extendItem(kids[i]);
-        } else if (t === "RasterItem" || t === "PlacedItem") extendBox(item);
-        else bump(t); // 글자, 심볼, 메시 등은 건드리지 않음
+            for (i = 0; i < kids.length; i++) inflateItem(kids[i], fr);
+        } else if (t === "RasterItem" || t === "PlacedItem") coverImage(item, fr);
+        else bump(t); // 글자, 심볼 등은 건드리지 않음
     }
+    function inflateMasks(item) {
+        if (item.hidden || item.typename !== "GroupItem") return;
+        unlock(item);
+        if (item.clipped) {
+            var clip = findClip(item);
+            if (!clip) return;
+            var b = clip.geometricBounds;
+            var fr = { L: b[0], T: b[1], R: b[2], B: b[3] };
+            var kids = [], i;
+            for (i = 0; i < item.pageItems.length; i++) kids.push(item.pageItems[i]);
+            for (i = 0; i < kids.length; i++) inflateItem(kids[i], fr);
+            stats.maskGroups++;
+        } else {
+            var ch = [], j;
+            for (j = 0; j < item.pageItems.length; j++) ch.push(item.pageItems[j]);
+            for (j = 0; j < ch.length; j++) inflateMasks(ch[j]);
+        }
+    }
+    for (var n = 0; n < tops.length; n++) inflateMasks(tops[n]);
 
-    var art = layersTopItems(doc, cutLayer, []);
-    for (var n = 0; n < art.length; n++) extendItem(art[n]);
+    // ---------- 3. 흰색 도련 (마스크 배경 바깥으로 나온 부분) ----------
+    var whiteLayer = doc.layers.add();
+    whiteLayer.name = CONFIG.whiteBleedLayerName;
+    workLayer = whiteLayer;
+    skipClipped = true;
+    var whitePaths = makeOutline(whiteItems, 0);
+    var white = makeColor(0, 0, 0, 0);
+    for (var w = 0; w < whitePaths.length; w++) {
+        var wp = whitePaths[w];
+        wp.filled = true; wp.fillColor = white;
+        wp.stroked = true; wp.strokeColor = white; wp.strokeWidth = BL * 2;
+        try { wp.strokeJoin = StrokeJoin.ROUNDENDJOIN; wp.strokeCap = StrokeCap.ROUNDENDCAP; } catch (e) {}
+        try { wp.strokeOverprint = false; wp.fillOverprint = false; } catch (e) {}
+    }
+    stats.whitePieces = whitePaths.length;
+    if (whitePaths.length === 0) whiteLayer.remove();
+    else whiteLayer.zOrder(ZOrderMethod.SENDTOBACK);
 
-    ab.artboardRect = yUp ? [L - BL, T + BL, R + BL, B - BL] : [L - BL, B - BL, R + BL, T + BL];
+    // ---------- 4. 아트보드 키우기 ----------
+    var nl = Math.min(AL, cl - BL), nr = Math.max(AR, cr + BL);
+    var nt = Math.max(AT, ct + BL), nb = Math.min(AB, cb - BL);
+    ab.artboardRect = yUp ? [nl, nt, nr, nb] : [nl, nb, nr, nt];
 
     relock();
     cutLayer.locked = false;
     doc.activeLayer = cutLayer;
+    doc.selection = null;
 
-    // ---------- 3. 복사본 저장 ----------
+    // ---------- 5. 복사본 저장 ----------
     var savedMsg = "";
     if (CONFIG.saveCopy) {
         try {
@@ -371,9 +433,10 @@
     for (var key in stats.skipped) skipTxt += "\n  - " + key + " " + stats.skipped[key] + "개 (늘리지 않음)";
     alert("완료\n칼선 조각: " + stats.cutPieces + "개" +
         (stats.cutPieces > 1 ? " (하나로 합쳐지지 않았습니다. 겹치지 않는 조각이나 합치기 실패가 있는지 칼선 레이어를 확인하세요)" : " (하나로 통합됨)") +
-        "\n도련으로 늘린 도형: " + stats.paths + "개, 이미지: " + stats.images + "개" +
+        "\n마스크 배경 키움: " + stats.maskGroups + "개 (도형 " + stats.paths + ", 이미지 " + stats.images + ")" +
+        "\n흰색 도련 도형: " + stats.whitePieces + "개" +
         (stats.traced ? "\n이미지 윤곽 추적: " + stats.traced + "개" : "") +
-        (stats.imageRects ? "\n사각형 경계로 칼선을 딴 이미지·기타: " + stats.imageRects + "개" : "") +
+        (stats.imageRects ? "\n사각형 경계로 윤곽을 딴 이미지·기타: " + stats.imageRects + "개" : "") +
         skipTxt + savedMsg +
         "\n\n도련 부분이 자연스러운지 눈으로 꼭 확인하세요.");
 })();
