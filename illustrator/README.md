@@ -13,7 +13,7 @@
 - 숨김·잠금 레이어/개체는 숨김은 건너뛰고, 잠금은 잠깐 풀었다가 되돌린다.
 
 ## 설정 (파일 맨 위 `CONFIG`)
-`bleedMM`, `cutLayerName`, `cutStrokePt`, `cutOffsetMM`(칼선 안/바깥 간격), `traceImages`(사진 윤곽 추적), `removeInnerHoles`(안쪽 구멍 선 제거, 기본 켬), `outlineStrokes`(선 두께까지 윤곽에 포함, 실험적), `saveCopy`.
+`bleedMM`, `cutLayerName`, `cutStrokePt`, `cutOffsetMM`(칼선 안/바깥 간격), `cutSourceLayers`(칼선을 딸 레이어 이름 목록, 비우면 보이는 전체), `traceImages`(사진 윤곽 추적), `removeInnerHoles`(안쪽 구멍 선 제거, 기본 켬), `outlineStrokes`(선 두께까지 윤곽에 포함, 실험적), `saveCopy`.
 
 ## 한계
 - 사진 윤곽 추적은 투명 배경(알파)이 있는 이미지를 전제로 한다. 배경이 흰색으로 찍힌 사진이면 윤곽이 사각형이 된다. 추적 결과가 이상하면 `traceImages`를 `false`로 하고 직접 그린다.

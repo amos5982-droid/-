@@ -18,6 +18,7 @@
         cutStrokePt: 0.5,        // 칼선 두께(pt)
         cutOffsetMM: 0,          // 칼선을 바깥(+)/안쪽(-)으로 옮길 mm. 0이면 외곽 그대로
         removeInnerHoles: true,  // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
+        cutSourceLayers: [],     // 칼선을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어. 예: ["흰테두리", "파란배경"]
         traceImages: true,       // true면 사진(이미지)을 이미지 추적으로 투명 배경 윤곽대로 땀. false면 사각형
         outlineStrokes: false,   // true면 선(stroke) 두께까지 윤곽에 포함 (실험적)
         saveCopy: true,          // 끝나면 _도련칼선.ai 복사본으로 저장
@@ -69,12 +70,17 @@
         cm.cyan = c; cm.magenta = m; cm.yellow = y; cm.black = k;
         return cm;
     }
-    function layersTopItems(container, skipLayer, out) {
+    function inNames(name, names) {
+        for (var i = 0; i < names.length; i++) if (names[i] === name) return true;
+        return false;
+    }
+    function layersTopItems(container, skipLayer, out, names, parentOk) {
         for (var i = 0; i < container.layers.length; i++) {
             var ly = container.layers[i];
             if (ly === skipLayer || !ly.visible) continue;
-            for (var j = 0; j < ly.pageItems.length; j++) out.push(ly.pageItems[j]);
-            layersTopItems(ly, skipLayer, out);
+            var ok = !names || names.length === 0 || parentOk || inNames(ly.name, names);
+            if (ok) for (var j = 0; j < ly.pageItems.length; j++) out.push(ly.pageItems[j]);
+            layersTopItems(ly, skipLayer, out, names, ok && !!names && names.length > 0);
         }
         return out;
     }
@@ -223,7 +229,7 @@
     }
 
     var shapes = [];
-    var tops = layersTopItems(doc, cutLayer, []);
+    var tops = layersTopItems(doc, cutLayer, [], CONFIG.cutSourceLayers, false);
     for (var s = 0; s < tops.length; s++) addShapes(tops[s], shapes);
 
     if (shapes.length === 0) {
