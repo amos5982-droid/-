@@ -24,7 +24,7 @@
         whiteBleedSourceLayers: [],    // 흰색 도련으로 부풀릴 레이어 이름들. 비우면 위 레이어에서 마스크 묶음을 뺀 나머지
         removeInnerHoles: true,        // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
         traceImages: true,             // true면 사진을 이미지 추적으로 투명 배경 윤곽대로 땀. false면 사각형
-        outlineStrokes: false,         // true면 선(stroke) 두께까지 윤곽에 포함 (실험적)
+        outlineStrokes: true,          // true면 흰 선(stroke)으로 된 외곽선도 선 두께 바깥 가장자리까지 윤곽에 포함
         saveCopy: true,                // 끝나면 _도련칼선.ai 복사본으로 저장
         edgeTolPt: 0.5                 // 가장자리로 볼 허용 오차(pt)
     };
@@ -229,6 +229,33 @@
             }
         }
     }
+    // 선(stroke)이 남아 있는 패스가 있는가
+    function hasStroke(layer) {
+        var ps = layerPaths(layer);
+        for (var i = 0; i < ps.length; i++) {
+            try { if (ps[i].stroked && ps[i].strokeWidth > 0) return true; } catch (e) {}
+        }
+        return false;
+    }
+    // 선을 면으로 바꾼다(윤곽선 만들기). 선 두께의 바깥 가장자리까지 윤곽에 들어가게 하려는 것.
+    function outlineStrokes(list) {
+        var attempts = [["OffsetPath v22"], ["Live Outline Stroke", "expandStyle"]];
+        for (var a = 0; a < attempts.length; a++) {
+            try {
+                doc.selection = null;
+                doc.selection = list;
+                for (var c = 0; c < attempts[a].length; c++) app.executeMenuCommand(attempts[a][c]);
+                try { app.executeMenuCommand("ungroup"); } catch (e1) {}
+            } catch (e) {}
+            if (!hasStroke(workLayer)) break;
+            list = [];
+            for (var i = 0; i < workLayer.pageItems.length; i++) list.push(workLayer.pageItems[i]);
+        }
+        if (hasStroke(workLayer)) stats.strokeFail = true;
+        var out = [];
+        for (var j = 0; j < workLayer.pageItems.length; j++) out.push(workLayer.pageItems[j]);
+        return out;
+    }
     // 겹치는 도형들을 하나로 합친다(패스파인더 더하기). 선택 방식을 바꿔가며 합쳐질 때까지 시도한다.
     function uniteShapes(list) {
         var before = workLayer.pageItems.length, i, tryNo;
@@ -263,9 +290,7 @@
         for (s = 0; s < items.length; s++) addShapes(items[s], shapes);
         if (shapes.length === 0) return [];
 
-        if (needOutline && CONFIG.outlineStrokes) {
-            try { doc.selection = null; doc.selection = shapes; app.executeMenuCommand("OffsetPath v22"); } catch (e) {}
-        }
+        if (needOutline && CONFIG.outlineStrokes) shapes = outlineStrokes(shapes);
         if (shapes.length > 1) uniteShapes(shapes);
         if (offsetMM !== 0) {
             try {
@@ -568,6 +593,7 @@
         "\n흰색 도련 도형: " + stats.whitePieces + "개" +
         (stats.traced ? "\n이미지 윤곽 추적: " + stats.traced + "개" : "") +
         (stats.imageRects ? "\n사각형 경계로 윤곽을 딴 이미지·기타: " + stats.imageRects + "개" : "") +
+        (stats.strokeFail ? "\n(선 두께를 면으로 바꾸지 못한 곳이 있습니다. 칼선이 선의 중심선을 따랐을 수 있으니 흰 선 레이어를 확인하세요)" : "") +
         skipTxt + savedMsg +
         "\n\n도련 부분이 자연스러운지 눈으로 꼭 확인하세요.");
 })();

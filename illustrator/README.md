@@ -19,7 +19,7 @@
 - 아트보드는 도련이 들어가도록 키운다.
 
 ## 설정 (파일 맨 위 `CONFIG`)
-`bleedMM`, `cutLayerName`, `cutStrokePt`, `cutOffsetMM`(칼선 안/바깥 간격), `cutSourceLayers`, `whiteBleedLayerName`, `whiteBleedSourceLayers`(흰색 도련으로 부풀릴 레이어. 비우면 `cutSourceLayers`에서 마스크 묶음을 뺀 나머지), `traceImages`(사진 윤곽 추적), `removeInnerHoles`, `outlineStrokes`(선 두께까지 윤곽에 포함, 실험적), `saveCopy`.
+`bleedMM`, `cutLayerName`, `cutStrokePt`, `cutOffsetMM`(칼선 안/바깥 간격), `cutSourceLayers`, `whiteBleedLayerName`, `whiteBleedSourceLayers`(흰색 도련으로 부풀릴 레이어. 비우면 `cutSourceLayers`에서 마스크 묶음을 뺀 나머지), `traceImages`(사진 윤곽 추적), `removeInnerHoles`, `outlineStrokes`(흰 선으로 된 외곽선도 선 두께 바깥까지 윤곽에 포함, 기본 켬), `saveCopy`.
 
 ## 한계
 - 사진 윤곽 추적은 투명 배경(알파)이 있는 이미지를 전제로 한다. 흰색 도형(벡터)으로 된 테두리 레이어가 있으면 그걸 쓰는 편이 정확하고 빠르다.
