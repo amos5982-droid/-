@@ -74,7 +74,7 @@
         return cm;
     }
     function inNames(name, names) {
-        for (var i = 0; i < names.length; i++) if (names[i] === name) return true;
+        for (var i = 0; i < names.length; i++) if (name.indexOf(names[i]) >= 0) return true; // 이름에 포함되면 사용
         return false;
     }
     function layersTopItems(container, skipLayer, out, names, parentOk) {
@@ -297,6 +297,27 @@
         relock();
         alert("cutSourceLayers에 적은 이름의 레이어를 찾지 못했습니다.\n현재 레이어:\n" + nm.join("\n") +
             "\n\n파일 맨 위 CONFIG의 cutSourceLayers를 위 이름에 맞게 고치세요.");
+        return;
+    }
+    // 어떤 레이어가 쓰이는지 보여 준다 (이름이 안 맞아서 빠지는 일을 막기 위해)
+    function describeLayers(container, indent, parentOk, lines) {
+        for (var i = 0; i < container.layers.length; i++) {
+            var ly = container.layers[i];
+            var names = CONFIG.cutSourceLayers;
+            var ok = names.length === 0 || parentOk || inNames(ly.name, names);
+            var kinds = {}, j, tp, desc = [];
+            for (j = 0; j < ly.pageItems.length; j++) { tp = ly.pageItems[j].typename; kinds[tp] = (kinds[tp] || 0) + 1; }
+            for (tp in kinds) desc.push(tp.replace("Item", "") + " " + kinds[tp]);
+            lines.push(indent + (ly === cutLayer ? "(칼선 레이어)" : ((ok && ly.visible ? "[사용] " : "[제외] ") + (ly.visible ? "" : "(숨김) ")) + ly.name + (desc.length ? " : " + desc.join(", ") : "")));
+            describeLayers(ly, indent + "    ", ok && names.length > 0, lines);
+        }
+    }
+    var lineList = [];
+    describeLayers(doc, "", false, lineList);
+    if (!confirm("아래 레이어로 칼선과 도련을 만듭니다.\n\n" + lineList.join("\n") +
+        "\n\n[제외]인데 써야 하는 레이어가 있으면 취소하고, 파일 맨 위 cutSourceLayers 이름을 고치세요.")) {
+        cutLayer.remove();
+        relock();
         return;
     }
     var whiteItems = (CONFIG.whiteBleedSourceLayers.length > 0)
