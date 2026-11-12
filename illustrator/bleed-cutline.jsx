@@ -18,6 +18,7 @@
         cutLayerName: "칼선",           // 칼선 레이어 이름
         cutStrokePt: 0.5,              // 칼선 두께(pt)
         cutOffsetMM: 0,                // 칼선을 바깥(+)/안쪽(-)으로 옮길 mm. 0이면 외곽 그대로
+        pickLayers: true,              // true면 실행할 때 칼선에 쓸 레이어를 직접 고르는 창을 띄움 (파일마다 레이어가 달라도 안전)
         cutSourceLayers: ["배경", "테두리"], // 칼선과 도련을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어
         whiteBleedLayerName: "도련_흰색", // 흰색 도련 도형을 담을 레이어 이름
         whiteBleedSourceLayers: [],    // 흰색 도련으로 부풀릴 레이어 이름들. 비우면 위 레이어에서 마스크 묶음을 뺀 나머지
@@ -288,12 +289,64 @@
     unlockLayers(doc);
 
     var blackColor = makeColor(0, 0, 0, 100);
+    // 칼선에 쓸 레이어를 고르는 창. 목록의 레이어 중 여러 개를 Ctrl/Shift+클릭으로 고른다.
+    function pickLayers() {
+        var entries = [], labels = [];
+        function walk(container, indent) {
+            for (var i = 0; i < container.layers.length; i++) {
+                var ly = container.layers[i];
+                entries.push(ly);
+                labels.push(indent + ly.name + (ly.visible ? "" : "  (숨김)"));
+                walk(ly, indent + "    ");
+            }
+        }
+        walk(doc, "");
+        var pre = [];
+        for (var e = 0; e < entries.length; e++) {
+            if (entries[e].visible && CONFIG.cutSourceLayers.length > 0 && inNames(entries[e].name, CONFIG.cutSourceLayers)) pre.push(e);
+        }
+        var w = new Window("dialog", "칼선/도련에 쓸 레이어 고르기");
+        w.orientation = "column";
+        w.alignChildren = "fill";
+        w.add("statictext", undefined,
+            "칼선을 만들 레이어를 모두 고르세요 (Ctrl 또는 Shift + 클릭).\n" +
+            "예: 파란 배경 레이어 + 흰 테두리 레이어(테두리가 사진 안에 있으면 선수 사진 레이어).\n" +
+            "글자나 정보 레이어는 안 골라도 됩니다.", { multiline: true });
+        var lb = w.add("listbox", undefined, labels, { multiselect: true });
+        lb.preferredSize = [420, 320];
+        if (pre.length) lb.selection = pre;
+        var bg = w.add("group");
+        bg.alignment = "right";
+        bg.add("button", undefined, "확인", { name: "ok" });
+        bg.add("button", undefined, "취소", { name: "cancel" });
+        if (w.show() !== 1) return null;
+        var res = [];
+        if (lb.selection) {
+            var sel = (lb.selection instanceof Array) ? lb.selection : [lb.selection];
+            for (var k = 0; k < sel.length; k++) if (entries[sel[k].index].visible) res.push(entries[sel[k].index]);
+        }
+        return res;
+    }
+    function itemsOfLayers(layers) {
+        var out = [];
+        for (var i = 0; i < layers.length; i++) {
+            for (var j = 0; j < layers[i].pageItems.length; j++) out.push(layers[i].pageItems[j]);
+        }
+        return out;
+    }
+    var pickedLayers = null;
+    if (preSel.length === 0 && CONFIG.pickLayers) {
+        pickedLayers = pickLayers();
+        if (pickedLayers === null) { relock(); return; }
+        if (pickedLayers.length === 0) { relock(); alert("고른 레이어가 없습니다."); return; }
+    }
+
     var cutLayer = doc.layers.add();
     cutLayer.name = CONFIG.cutLayerName;
 
     var useSelection = preSel.length > 0;
-    var tops = useSelection ? preSel : layersTopItems(doc, cutLayer, [], CONFIG.cutSourceLayers, false);
-    if (tops.length === 0 && !useSelection) {
+    var tops = useSelection ? preSel : (pickedLayers ? itemsOfLayers(pickedLayers) : layersTopItems(doc, cutLayer, [], CONFIG.cutSourceLayers, false));
+    if (tops.length === 0 && !useSelection && !pickedLayers) {
         var nm = [];
         for (var li = 0; li < doc.layers.length; li++) nm.push("- " + doc.layers[li].name);
         cutLayer.remove();
@@ -319,10 +372,8 @@
             describeLayers(ly, indent + "    ", ok && names.length > 0);
         }
     }
-    var confirmMsg;
-    if (useSelection) {
-        confirmMsg = "선택해 둔 개체 " + tops.length + "개로 칼선과 도련을 만듭니다.\n\n진행할까요?";
-    } else {
+    var confirmMsg = null;   // 선택한 개체나 고른 레이어는 사용자가 이미 정했으므로 다시 묻지 않는다
+    if (!useSelection && !pickedLayers) {
         describeLayers(doc, "", false);
         var shown = usedLines.slice(0, 25);
         confirmMsg = "아래 레이어로 칼선과 도련을 만듭니다. (제외된 레이어 " + excludedCount + "개)\n\n" +
@@ -330,12 +381,12 @@
             (usedLines.length > 25 ? "\n... 외 " + (usedLines.length - 25) + "개" : "") +
             "\n\n쓸 레이어가 빠졌으면 취소하세요. 레이어 이름 대신 개체를 먼저 선택하고 실행해도 됩니다.";
     }
-    if (!confirm(confirmMsg)) {
+    if (confirmMsg !== null && !confirm(confirmMsg)) {
         cutLayer.remove();
         relock();
         return;
     }
-    var whiteItems = (!useSelection && CONFIG.whiteBleedSourceLayers.length > 0)
+    var whiteItems = (!useSelection && !pickedLayers && CONFIG.whiteBleedSourceLayers.length > 0)
         ? layersTopItems(doc, cutLayer, [], CONFIG.whiteBleedSourceLayers, false)
         : tops;
 
