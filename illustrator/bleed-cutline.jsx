@@ -18,7 +18,7 @@
         cutLayerName: "칼선",           // 칼선 레이어 이름
         cutStrokePt: 0.5,              // 칼선 두께(pt)
         cutOffsetMM: 0,                // 칼선을 바깥(+)/안쪽(-)으로 옮길 mm. 0이면 외곽 그대로
-        cutSourceLayers: ["배경", "테두리"], // 칼선과 도련을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어
+        cutSourceLayers: ["배경", "外廓线"], // 칼선과 도련을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어
         whiteBleedLayerName: "도련_흰색", // 흰색 도련 도형을 담을 레이어 이름
         whiteBleedSourceLayers: [],    // 흰색 도련으로 부풀릴 레이어 이름들. 비우면 위 레이어에서 마스크 묶음을 뺀 나머지
         removeInnerHoles: true,        // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
