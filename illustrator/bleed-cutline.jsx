@@ -229,6 +229,33 @@
             }
         }
     }
+    // 겹치는 도형들을 하나로 합친다(패스파인더 더하기). 선택 방식을 바꿔가며 합쳐질 때까지 시도한다.
+    function uniteShapes(list) {
+        var before = workLayer.pageItems.length, i, tryNo;
+        for (tryNo = 0; tryNo < 3; tryNo++) {
+            try {
+                doc.selection = null;
+                if (tryNo === 0) {
+                    doc.selection = list;
+                } else if (tryNo === 1) {
+                    for (i = 0; i < list.length; i++) list[i].selected = true;
+                } else {
+                    var grp = workLayer.groupItems.add();
+                    for (i = 0; i < list.length; i++) list[i].move(grp, ElementPlacement.PLACEATEND);
+                    grp.selected = true;
+                }
+                app.executeMenuCommand("Live Pathfinder Add");
+                app.executeMenuCommand("expandStyle");
+            } catch (e) {}
+            if (workLayer.pageItems.length < before) return true;
+            // 실패했으면 현재 남은 개체로 목록을 다시 만들어 다음 방법으로
+            list = [];
+            for (i = 0; i < workLayer.pageItems.length; i++) list.push(workLayer.pageItems[i]);
+            before = list.length;
+            if (before < 2) return true;
+        }
+        return false;
+    }
     // items를 복제해서 workLayer에 하나의 바깥 윤곽으로 합친다. 결과 패스 배열을 돌려준다.
     function makeOutline(items, offsetMM) {
         needOutline = false;
@@ -239,16 +266,7 @@
         if (needOutline && CONFIG.outlineStrokes) {
             try { doc.selection = null; doc.selection = shapes; app.executeMenuCommand("OffsetPath v22"); } catch (e) {}
         }
-        if (shapes.length > 1) {
-            try {
-                doc.selection = null;
-                doc.selection = shapes;
-                app.executeMenuCommand("Live Pathfinder Add");
-                app.executeMenuCommand("expandStyle");
-            } catch (e) {
-                alert("도형 합치기(패스파인더)에 실패했습니다: " + e);
-            }
-        }
+        if (shapes.length > 1) uniteShapes(shapes);
         if (offsetMM !== 0) {
             try {
                 var effect = '<LiveEffect name="Adobe Offset Path"><Dict data="R mlim 4 R ofst ' +
@@ -496,7 +514,24 @@
     }
     stats.whitePieces = whitePaths.length;
     if (whitePaths.length === 0) whiteLayer.remove();
-    else whiteLayer.zOrder(ZOrderMethod.SENDTOBACK);
+    else {
+        // 쓴 레이어 중 가장 아래 레이어 바로 밑에 둔다 (그 아래 다른 배경 위, 파란 배경 아래)
+        var lowest = -1, li2;
+        for (var ti = 0; ti < tops.length; ti++) {
+            var lyr = null;
+            try { lyr = tops[ti].layer; } catch (e) {}
+            while (lyr && lyr.parent && lyr.parent.typename === "Layer") lyr = lyr.parent;
+            for (li2 = 0; lyr && li2 < doc.layers.length; li2++) {
+                if (doc.layers[li2] === lyr && li2 > lowest && doc.layers[li2] !== whiteLayer && doc.layers[li2] !== cutLayer) lowest = li2;
+            }
+        }
+        try {
+            if (lowest < 0) throw new Error("no layer");
+            whiteLayer.move(doc.layers[lowest], ElementPlacement.PLACEAFTER);
+        } catch (e) {
+            whiteLayer.zOrder(ZOrderMethod.SENDTOBACK);
+        }
+    }
 
     // ---------- 4. 아트보드 키우기 ----------
     var nl = Math.min(AL, cl - BL), nr = Math.max(AR, cr + BL);
