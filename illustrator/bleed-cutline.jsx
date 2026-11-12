@@ -18,7 +18,7 @@
         cutLayerName: "칼선",           // 칼선 레이어 이름
         cutStrokePt: 0.5,              // 칼선 두께(pt)
         cutOffsetMM: 0,                // 칼선을 바깥(+)/안쪽(-)으로 옮길 mm. 0이면 외곽 그대로
-        cutSourceLayers: [],           // 칼선과 도련을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어
+        cutSourceLayers: ["배경", "흰테두리"], // 칼선과 도련을 따는 데 쓸 레이어 이름들. 비우면 보이는 모든 레이어
         whiteBleedLayerName: "도련_흰색", // 흰색 도련 도형을 담을 레이어 이름
         whiteBleedSourceLayers: [],    // 흰색 도련으로 부풀릴 레이어 이름들. 비우면 위 레이어에서 마스크 묶음을 뺀 나머지
         removeInnerHoles: true,        // true면 안쪽 구멍 선을 지우고 바깥 윤곽만 남김
@@ -290,6 +290,15 @@
     cutLayer.name = CONFIG.cutLayerName;
 
     var tops = layersTopItems(doc, cutLayer, [], CONFIG.cutSourceLayers, false);
+    if (tops.length === 0) {
+        var nm = [];
+        for (var li = 0; li < doc.layers.length; li++) nm.push("- " + doc.layers[li].name);
+        cutLayer.remove();
+        relock();
+        alert("cutSourceLayers에 적은 이름의 레이어를 찾지 못했습니다.\n현재 레이어:\n" + nm.join("\n") +
+            "\n\n파일 맨 위 CONFIG의 cutSourceLayers를 위 이름에 맞게 고치세요.");
+        return;
+    }
     var whiteItems = (CONFIG.whiteBleedSourceLayers.length > 0)
         ? layersTopItems(doc, cutLayer, [], CONFIG.whiteBleedSourceLayers, false)
         : tops;
