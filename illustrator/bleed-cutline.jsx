@@ -35,6 +35,8 @@
     if (app.documents.length === 0) { alert("열려 있는 문서가 없습니다."); return; }
     app.coordinateSystem = CoordinateSystem.DOCUMENTCOORDINATESYSTEM;
     var doc = app.activeDocument;
+    var preSel = [];   // 실행 전에 선택해 둔 개체
+    try { for (var ps = 0; ps < doc.selection.length; ps++) preSel.push(doc.selection[ps]); } catch (e) {}
     var ab = doc.artboards[doc.artboards.getActiveArtboardIndex()];
     var rect = ab.artboardRect;
     var yUp = rect[1] >= rect[3];
@@ -289,8 +291,9 @@
     var cutLayer = doc.layers.add();
     cutLayer.name = CONFIG.cutLayerName;
 
-    var tops = layersTopItems(doc, cutLayer, [], CONFIG.cutSourceLayers, false);
-    if (tops.length === 0) {
+    var useSelection = preSel.length > 0;
+    var tops = useSelection ? preSel : layersTopItems(doc, cutLayer, [], CONFIG.cutSourceLayers, false);
+    if (tops.length === 0 && !useSelection) {
         var nm = [];
         for (var li = 0; li < doc.layers.length; li++) nm.push("- " + doc.layers[li].name);
         cutLayer.remove();
@@ -299,28 +302,40 @@
             "\n\n파일 맨 위 CONFIG의 cutSourceLayers를 위 이름에 맞게 고치세요.");
         return;
     }
-    // 어떤 레이어가 쓰이는지 보여 준다 (이름이 안 맞아서 빠지는 일을 막기 위해)
-    function describeLayers(container, indent, parentOk, lines) {
+    // 어떤 레이어가 쓰이는지 보여 준다. 레이어가 많아도 보기 좋게 [사용]만 자세히 적는다.
+    var usedLines = [], excludedCount = 0;
+    function describeLayers(container, indent, parentOk) {
         for (var i = 0; i < container.layers.length; i++) {
             var ly = container.layers[i];
+            if (ly === cutLayer) continue;
             var names = CONFIG.cutSourceLayers;
             var ok = names.length === 0 || parentOk || inNames(ly.name, names);
-            var kinds = {}, j, tp, desc = [];
-            for (j = 0; j < ly.pageItems.length; j++) { tp = ly.pageItems[j].typename; kinds[tp] = (kinds[tp] || 0) + 1; }
-            for (tp in kinds) desc.push(tp.replace("Item", "") + " " + kinds[tp]);
-            lines.push(indent + (ly === cutLayer ? "(칼선 레이어)" : ((ok && ly.visible ? "[사용] " : "[제외] ") + (ly.visible ? "" : "(숨김) ")) + ly.name + (desc.length ? " : " + desc.join(", ") : "")));
-            describeLayers(ly, indent + "    ", ok && names.length > 0, lines);
+            if (ok && ly.visible) {
+                var kinds = {}, j, tp, desc = [];
+                for (j = 0; j < ly.pageItems.length; j++) { tp = ly.pageItems[j].typename; kinds[tp] = (kinds[tp] || 0) + 1; }
+                for (tp in kinds) desc.push(tp.replace("Item", "") + " " + kinds[tp]);
+                usedLines.push(indent + ly.name + (desc.length ? " : " + desc.join(", ") : " : (비어 있음)"));
+            } else excludedCount++;
+            describeLayers(ly, indent + "    ", ok && names.length > 0);
         }
     }
-    var lineList = [];
-    describeLayers(doc, "", false, lineList);
-    if (!confirm("아래 레이어로 칼선과 도련을 만듭니다.\n\n" + lineList.join("\n") +
-        "\n\n[제외]인데 써야 하는 레이어가 있으면 취소하고, 파일 맨 위 cutSourceLayers 이름을 고치세요.")) {
+    var confirmMsg;
+    if (useSelection) {
+        confirmMsg = "선택해 둔 개체 " + tops.length + "개로 칼선과 도련을 만듭니다.\n\n진행할까요?";
+    } else {
+        describeLayers(doc, "", false);
+        var shown = usedLines.slice(0, 25);
+        confirmMsg = "아래 레이어로 칼선과 도련을 만듭니다. (제외된 레이어 " + excludedCount + "개)\n\n" +
+            (shown.length ? shown.join("\n") : "(사용할 레이어가 없습니다)") +
+            (usedLines.length > 25 ? "\n... 외 " + (usedLines.length - 25) + "개" : "") +
+            "\n\n쓸 레이어가 빠졌으면 취소하세요. 레이어 이름 대신 개체를 먼저 선택하고 실행해도 됩니다.";
+    }
+    if (!confirm(confirmMsg)) {
         cutLayer.remove();
         relock();
         return;
     }
-    var whiteItems = (CONFIG.whiteBleedSourceLayers.length > 0)
+    var whiteItems = (!useSelection && CONFIG.whiteBleedSourceLayers.length > 0)
         ? layersTopItems(doc, cutLayer, [], CONFIG.whiteBleedSourceLayers, false)
         : tops;
 
